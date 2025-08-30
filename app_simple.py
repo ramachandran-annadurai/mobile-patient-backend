@@ -5661,11 +5661,14 @@ def debug_food_data(user_id):
         }), 500
 
 if __name__ == '__main__':
+    # Get port from environment variable or default to 5000
+    port = int(os.getenv("PORT", 5000))
+    
     print("🚀 Starting Patient Alert System Flask API...")
-    print("📱 API will be available at: http://localhost:5000")
+    print(f"📱 API will be available at: http://localhost:{port}")
     print("🌐 Web app can be accessed at: http://localhost:8080")
     
     # Start medication reminder scheduler
     scheduler_thread = start_medication_reminder_scheduler()
     
-    app.run(host='0.0.0.0', port=5000, debug=True) 
+    app.run(host='0.0.0.0', port=port, debug=True) 
