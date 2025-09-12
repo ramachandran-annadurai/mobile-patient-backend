@@ -194,7 +194,7 @@ class Database:
                 print(f"✅ Database '{db_name}' accessed successfully")
                 
                 # Initialize collections
-                self.patients_collection = db["patients_v2"]
+                self.patients_collection = db["patient_test"]
                 self.mental_health_collection = db["mental_health_logs"]
                 
                 # Test collections exist and are accessible
