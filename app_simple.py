@@ -194,7 +194,7 @@ class Database:
                 print(f"✅ Database '{db_name}' accessed successfully")
                 
                 # Initialize collections
-                self.patients_collection = db["patients_v2"]
+                self.patients_collection = db["Patient_test"]
                 self.mental_health_collection = db["mental_health_logs"]
                 
                 # Test collections exist and are accessible
@@ -252,7 +252,7 @@ class Database:
                 
                 print("✅ Connected to MongoDB successfully")
                 print(f"✅ Database: {db_name}")
-                print(f"✅ Collections: patients_v2, mental_health_logs")
+                print(f"✅ Collections: Patient_test, mental_health_logs")
                 return  # Success, exit the retry loop
                 
             except Exception as e:

@@ -1687,14 +1687,14 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                            ),
                            const SizedBox(height: 8),
                            Text(
-                             'Detailed food entries with allergies, medical conditions, and dietary preferences are automatically stored in your patient profile in the patients_v2 database.',
+                             'Detailed food entries with allergies, medical conditions, and dietary preferences are automatically stored in your patient profile in the Patient_test database.',
                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                color: Colors.blue[700],
                              ),
                            ),
                            const SizedBox(height: 4),
                            Text(
-                             'Storage Location: patients_v2 → food_data array → entry_type: "detailed"',
+                             'Storage Location: Patient_test → food_data array → entry_type: "detailed"',
                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                color: Colors.blue[600],
                                fontStyle: FontStyle.italic,
@@ -2279,7 +2279,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                     _buildAnalysisPoint('💡 Smart recommendations for next meals'),
                     const SizedBox(height: 8),
                     Text(
-                      'Storage: All analysis results are stored in patients_v2 → food_data array → entry_type: "gpt4_analyzed"',
+                      'Storage: All analysis results are stored in Patient_test → food_data array → entry_type: "gpt4_analyzed"',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Colors.green[600],
                         fontStyle: FontStyle.italic,

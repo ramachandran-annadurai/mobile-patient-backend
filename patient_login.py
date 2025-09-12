@@ -82,7 +82,7 @@ class PatientAuth:
             db = self.client[db_name]
             
             # Use the correct collection names where your data is stored
-            patients_collection_name = "patients_v2"
+            patients_collection_name = "Patient_test"
             doctors_collection_name = "doctor_v2"
             
             self.patients_collection = db[patients_collection_name]

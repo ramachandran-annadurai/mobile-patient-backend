@@ -38,7 +38,7 @@ class SimpleDatabase:
             self.client.admin.command('ping')
             
             db = self.client[db_name]
-            self.patients_collection = db["patients_v2"]
+            self.patients_collection = db["Patient_test"]
             
             print("✅ Connected to MongoDB successfully")
         except Exception as e:

@@ -28,7 +28,7 @@ class NutritionDatabase:
             
             self.client = pymongo.MongoClient(mongo_uri)
             db = self.client[db_name]
-            self.patients_collection = db["patients_v2"]
+            self.patients_collection = db["Patient_test"]
             self.food_entries_collection = db["food_entries"]
             
             # Create indexes
@@ -140,7 +140,7 @@ def get_pregnancy_info(patient_id):
 
 @app.route('/nutrition/save-food-entry', methods=['POST'])
 def save_food_entry():
-    """Save basic food entry to patients_v2 database"""
+    """Save basic food entry to Patient_test database"""
     try:
         if db.patients_collection is None:
             return jsonify({
@@ -178,7 +178,7 @@ def save_food_entry():
             'entry_type': 'basic'
         }
         
-        # Save to patients_v2 database
+        # Save to Patient_test database
         result = db.patients_collection.update_one(
             {"patient_id": data['userId']},
             {
@@ -192,10 +192,10 @@ def save_food_entry():
         )
         
         if result.modified_count > 0:
-            print(f"✅ Food entry saved in patients_v2 for user: {data['userId']}")
+            print(f"✅ Food entry saved in Patient_test for user: {data['userId']}")
             return jsonify({
                 'success': True,
-                'message': 'Food entry saved successfully in patients_v2',
+                'message': 'Food entry saved successfully in Patient_test',
                 'entry_id': f"entry_{datetime.now().timestamp()}",
                 'timestamp': food_entry['timestamp']
             }), 200
@@ -308,7 +308,7 @@ def save_detailed_food_entry():
 
 @app.route('/nutrition/get-food-entries/<user_id>', methods=['GET'])
 def get_food_entries(user_id):
-    """Get food entries from patients_v2 database"""
+    """Get food entries from Patient_test database"""
     try:
         if db.patients_collection is None:
             return jsonify({
@@ -665,7 +665,7 @@ def analyze_food_with_gpt4():
             # Parse the JSON response from GPT-4
             analysis_data = json.loads(gpt_response)
             
-            # Store the analysis in the patients_v2 database
+            # Store the analysis in the Patient_test database
             if user_id and db.patients_collection is not None:
                 # Create comprehensive food data entry with GPT-4 analysis
                 food_data_entry = {
@@ -693,7 +693,7 @@ def analyze_food_with_gpt4():
                 )
                 
                 if result.modified_count > 0:
-                    print(f"✅ Food data with GPT-4 analysis stored in patients_v2 for user: {user_id}")
+                    print(f"✅ Food data with GPT-4 analysis stored in Patient_test for user: {user_id}")
                     analysis_data['analysis_id'] = f"analysis_{datetime.now().timestamp()}"
                 else:
                     print(f"⚠️ Patient not found or no changes made for user: {user_id}")
