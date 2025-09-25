@@ -22,11 +22,11 @@ class ApiService {
     Map<String, String> headers = {
       'Content-Type': 'application/json',
     };
-    
+
     if (_authToken != null) {
       headers['Authorization'] = 'Bearer $_authToken';
     }
-    
+
     return headers;
   }
 
@@ -64,6 +64,7 @@ class ApiService {
     required String email,
     required String otp,
     required String role,
+    required String signupToken,
   }) async {
     try {
       final response = await http.post(
@@ -73,6 +74,47 @@ class ApiService {
           'email': email,
           'otp': otp,
           'role': role,
+          'signup_token': signupToken,
+        }),
+      );
+
+      return json.decode(response.body);
+    } catch (e) {
+      return {'error': 'Network error: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> resendOtp({
+    required String email,
+    required String signupToken,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/resend-otp'),
+        headers: _headers,
+        body: json.encode({
+          'email': email,
+          'signup_token': signupToken,
+        }),
+      );
+
+      return json.decode(response.body);
+    } catch (e) {
+      return {'error': 'Network error: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> editProfile({
+    required String patientId,
+    required Map<String, dynamic> profileData,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${ApiConfig.baseUrl}/edit-profile'),
+        headers: _headers,
+        body: json.encode({
+          'patient_id': patientId,
+          ...profileData,
         }),
       );
 
@@ -192,7 +234,8 @@ class ApiService {
   }) async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}${ApiConfig.getProfileEndpoint}/$patientId'),
+        Uri.parse(
+            '${ApiConfig.baseUrl}${ApiConfig.getProfileEndpoint}/$patientId'),
         headers: _headers,
       );
 
@@ -219,7 +262,8 @@ class ApiService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('${ApiConfig.doctorBaseUrl}${ApiConfig.completeDoctorProfileEndpoint}'),
+        Uri.parse(
+            '${ApiConfig.doctorBaseUrl}${ApiConfig.completeDoctorProfileEndpoint}'),
         headers: _headers,
         body: json.encode({
           'first_name': firstName,
@@ -280,7 +324,8 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> saveSleepLog(Map<String, dynamic> sleepData) async {
+  Future<Map<String, dynamic>> saveSleepLog(
+      Map<String, dynamic> sleepData) async {
     try {
       // DEBUG LOGGING - See exactly what's being sent
       print('🔍 ===== API SERVICE DEBUG START =====');
@@ -290,7 +335,7 @@ class ApiService {
       print('🔍 Email Field: ${sleepData['email']}');
       print('🔍 JSON Encoded: ${json.encode(sleepData)}');
       print('🔍 ===== API SERVICE DEBUG END =====');
-      
+
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/save-sleep-log'),
         headers: _headers,
@@ -308,7 +353,8 @@ class ApiService {
   }
 
   // Save kick session data
-  Future<Map<String, dynamic>> saveKickSession(Map<String, dynamic> kickData) async {
+  Future<Map<String, dynamic>> saveKickSession(
+      Map<String, dynamic> kickData) async {
     try {
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/save-kick-session'),
@@ -345,12 +391,13 @@ class ApiService {
   }
 
   // Analyze symptoms using quantum+LLM
-  Future<Map<String, dynamic>> analyzeSymptoms(Map<String, dynamic> symptomData) async {
+  Future<Map<String, dynamic>> analyzeSymptoms(
+      Map<String, dynamic> symptomData) async {
     try {
       print('🔍 Symptom Analysis API Call:');
       print('🔍 URL: ${ApiConfig.baseUrl}/symptoms/assist');
       print('🔍 Data: $symptomData');
-      
+
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/symptoms/assist'),
         headers: _headers,
@@ -372,12 +419,13 @@ class ApiService {
   }
 
   // Save symptom analysis report to backend
-  Future<Map<String, dynamic>> saveSymptomAnalysisReport(Map<String, dynamic> reportData) async {
+  Future<Map<String, dynamic>> saveSymptomAnalysisReport(
+      Map<String, dynamic> reportData) async {
     try {
       print('🔍 Saving Symptom Analysis Report:');
       print('🔍 URL: ${ApiConfig.baseUrl}/symptoms/save-analysis-report');
       print('🔍 Data: $reportData');
-      
+
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/symptoms/save-analysis-report'),
         headers: _headers,
@@ -399,19 +447,23 @@ class ApiService {
   }
 
   // Get symptom analysis reports history
-  Future<Map<String, dynamic>> getSymptomAnalysisReports(String patientId) async {
+  Future<Map<String, dynamic>> getSymptomAnalysisReports(
+      String patientId) async {
     try {
       print('🔍 Getting Symptom Analysis Reports:');
-      print('🔍 URL: ${ApiConfig.baseUrl}/symptoms/get-analysis-reports/$patientId');
-      
+      print(
+          '🔍 URL: ${ApiConfig.baseUrl}/symptoms/get-analysis-reports/$patientId');
+
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/symptoms/get-analysis-reports/$patientId'),
+        Uri.parse(
+            '${ApiConfig.baseUrl}/symptoms/get-analysis-reports/$patientId'),
         headers: _headers,
       );
 
       if (response.statusCode == 200) {
         final result = json.decode(response.body);
-        print('🔍 Reports Retrieved: ${result['totalAnalysisReports']} reports');
+        print(
+            '🔍 Reports Retrieved: ${result['totalAnalysisReports']} reports');
         return result;
       } else {
         print('❌ API Error: ${response.statusCode} - ${response.body}');
@@ -424,12 +476,13 @@ class ApiService {
   }
 
   // Save medication log to backend
-  Future<Map<String, dynamic>> saveMedicationLog(Map<String, dynamic> medicationData) async {
+  Future<Map<String, dynamic>> saveMedicationLog(
+      Map<String, dynamic> medicationData) async {
     try {
       print('🔍 Saving Medication Log:');
       print('🔍 URL: ${ApiConfig.baseUrl}/medication/save-medication-log');
       print('🔍 Data: $medicationData');
-      
+
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/medication/save-medication-log'),
         headers: _headers,
@@ -454,16 +507,19 @@ class ApiService {
   Future<Map<String, dynamic>> getMedicationHistory(String patientId) async {
     try {
       print('🔍 Getting Medication History:');
-      print('🔍 URL: ${ApiConfig.baseUrl}/medication/get-medication-history/$patientId');
-      
+      print(
+          '🔍 URL: ${ApiConfig.baseUrl}/medication/get-medication-history/$patientId');
+
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/medication/get-medication-history/$patientId'),
+        Uri.parse(
+            '${ApiConfig.baseUrl}/medication/get-medication-history/$patientId'),
         headers: _headers,
       );
 
       if (response.statusCode == 200) {
         final result = json.decode(response.body);
-        print('🔍 Medication History Retrieved: ${result['totalEntries']} entries');
+        print(
+            '🔍 Medication History Retrieved: ${result['totalEntries']} entries');
         return result;
       } else {
         print('❌ API Error: ${response.statusCode} - ${response.body}');
@@ -479,16 +535,19 @@ class ApiService {
   Future<Map<String, dynamic>> getUpcomingDosages(String patientId) async {
     try {
       print('🔍 Getting Upcoming Dosages:');
-      print('🔍 URL: ${ApiConfig.baseUrl}/medication/get-upcoming-dosages/$patientId');
-      
+      print(
+          '🔍 URL: ${ApiConfig.baseUrl}/medication/get-upcoming-dosages/$patientId');
+
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/medication/get-upcoming-dosages/$patientId'),
+        Uri.parse(
+            '${ApiConfig.baseUrl}/medication/get-upcoming-dosages/$patientId'),
         headers: _headers,
       );
 
       if (response.statusCode == 200) {
         final result = json.decode(response.body);
-        print('🔍 Upcoming Dosages Retrieved: ${result['total_upcoming']} dosages');
+        print(
+            '🔍 Upcoming Dosages Retrieved: ${result['total_upcoming']} dosages');
         return result;
       } else {
         print('❌ API Error: ${response.statusCode} - ${response.body}');
@@ -501,12 +560,13 @@ class ApiService {
   }
 
   // Save tablet taken for daily tracking
-  Future<Map<String, dynamic>> saveTabletTaken(Map<String, dynamic> tabletData) async {
+  Future<Map<String, dynamic>> saveTabletTaken(
+      Map<String, dynamic> tabletData) async {
     try {
       print('🔍 Saving Tablet Taken:');
       print('🔍 URL: ${ApiConfig.baseUrl}/medication/save-tablet-taken');
       print('🔍 Data: $tabletData');
-      
+
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/medication/save-tablet-taken'),
         headers: _headers,
@@ -528,12 +588,13 @@ class ApiService {
   }
 
   // Save tablet tracking data in medication_daily_tracking array
-  Future<Map<String, dynamic>> saveTabletTracking(Map<String, dynamic> tabletData) async {
+  Future<Map<String, dynamic>> saveTabletTracking(
+      Map<String, dynamic> tabletData) async {
     try {
       print('🔍 Saving Tablet Tracking in medication_daily_tracking array:');
       print('🔍 URL: ${ApiConfig.baseUrl}/medication/save-tablet-tracking');
       print('🔍 Data: $tabletData');
-      
+
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/medication/save-tablet-tracking'),
         headers: _headers,
@@ -542,7 +603,8 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final result = json.decode(response.body);
-        print('🔍 Tablet Tracking Saved Successfully in medication_daily_tracking array: $result');
+        print(
+            '🔍 Tablet Tracking Saved Successfully in medication_daily_tracking array: $result');
         return result;
       } else {
         print('❌ API Error: ${response.statusCode} - ${response.body}');
@@ -555,19 +617,24 @@ class ApiService {
   }
 
   // Get tablet tracking history from medication_daily_tracking array
-  Future<Map<String, dynamic>> getTabletTrackingHistory(String patientId) async {
+  Future<Map<String, dynamic>> getTabletTrackingHistory(
+      String patientId) async {
     try {
-      print('🔍 Getting Tablet Tracking History from medication_daily_tracking array:');
-      print('🔍 URL: ${ApiConfig.baseUrl}/medication/get-tablet-tracking-history/$patientId');
-      
+      print(
+          '🔍 Getting Tablet Tracking History from medication_daily_tracking array:');
+      print(
+          '🔍 URL: ${ApiConfig.baseUrl}/medication/get-tablet-tracking-history/$patientId');
+
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/medication/get-tablet-tracking-history/$patientId'),
+        Uri.parse(
+            '${ApiConfig.baseUrl}/medication/get-tablet-tracking-history/$patientId'),
         headers: _headers,
       );
 
       if (response.statusCode == 200) {
         final result = json.decode(response.body);
-        print('🔍 Tablet Tracking History Retrieved from medication_daily_tracking array: ${result['totalEntries'] ?? 0} entries');
+        print(
+            '🔍 Tablet Tracking History Retrieved from medication_daily_tracking array: ${result['totalEntries'] ?? 0} entries');
         return result;
       } else {
         print('❌ API Error: ${response.statusCode} - ${response.body}');
@@ -580,12 +647,13 @@ class ApiService {
   }
 
   // Upload prescription details and dosage information
-  Future<Map<String, dynamic>> uploadPrescription(Map<String, dynamic> prescriptionData) async {
+  Future<Map<String, dynamic>> uploadPrescription(
+      Map<String, dynamic> prescriptionData) async {
     try {
       print('🔍 Uploading Prescription:');
       print('🔍 URL: ${ApiConfig.baseUrl}/medication/upload-prescription');
       print('🔍 Data: $prescriptionData');
-      
+
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/medication/upload-prescription'),
         headers: _headers,
@@ -610,16 +678,19 @@ class ApiService {
   Future<Map<String, dynamic>> getPrescriptionDetails(String patientId) async {
     try {
       print('🔍 Getting Prescription Details:');
-      print('🔍 URL: ${ApiConfig.baseUrl}/medication/get-prescription-details/$patientId');
-      
+      print(
+          '🔍 URL: ${ApiConfig.baseUrl}/medication/get-prescription-details/$patientId');
+
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/medication/get-prescription-details/$patientId'),
+        Uri.parse(
+            '${ApiConfig.baseUrl}/medication/get-prescription-details/$patientId'),
         headers: _headers,
       );
 
       if (response.statusCode == 200) {
         final result = json.decode(response.body);
-        print('🔍 Prescription Details Retrieved: ${result['totalPrescriptions']} prescriptions');
+        print(
+            '🔍 Prescription Details Retrieved: ${result['totalPrescriptions']} prescriptions');
         return result;
       } else {
         print('❌ API Error: ${response.statusCode} - ${response.body}');
@@ -632,14 +703,17 @@ class ApiService {
   }
 
   // Update prescription status
-  Future<Map<String, dynamic>> updatePrescriptionStatus(String patientId, String prescriptionId, String status) async {
+  Future<Map<String, dynamic>> updatePrescriptionStatus(
+      String patientId, String prescriptionId, String status) async {
     try {
       print('🔍 Updating Prescription Status:');
-      print('🔍 URL: ${ApiConfig.baseUrl}/medication/update-prescription-status/$patientId/$prescriptionId');
+      print(
+          '🔍 URL: ${ApiConfig.baseUrl}/medication/update-prescription-status/$patientId/$prescriptionId');
       print('🔍 Status: $status');
-      
+
       final response = await http.put(
-        Uri.parse('${ApiConfig.baseUrl}/medication/update-prescription-status/$patientId/$prescriptionId'),
+        Uri.parse(
+            '${ApiConfig.baseUrl}/medication/update-prescription-status/$patientId/$prescriptionId'),
         headers: _headers,
         body: json.encode({'status': status}),
       );
@@ -659,23 +733,25 @@ class ApiService {
   }
 
   // Process prescription through N8N webhook
-  Future<Map<String, dynamic>> processPrescriptionWithN8N(Map<String, dynamic> prescriptionData) async {
+  Future<Map<String, dynamic>> processPrescriptionWithN8N(
+      Map<String, dynamic> prescriptionData) async {
     try {
       // Get webhook URL from config
       final String n8nWebhookUrl = N8NConfig.getWebhookUrl('prescription');
-      
+
       // Check if webhook is configured
       if (!N8NConfig.isConfigured) {
         return {
-          'error': 'N8N webhook not configured. Please update n8n_config.dart with your webhook URLs.',
+          'error':
+              'N8N webhook not configured. Please update n8n_config.dart with your webhook URLs.',
           'step': 'configuration_error'
         };
       }
-      
+
       print('🔍 Processing Prescription with N8N:');
       print('🔍 N8N Webhook URL: $n8nWebhookUrl');
       print('🔍 Data: $prescriptionData');
-      
+
       final response = await http.post(
         Uri.parse(n8nWebhookUrl),
         headers: {
@@ -706,7 +782,7 @@ class ApiService {
   }) async {
     try {
       print('🔍 Processing prescription with OCR and N8N webhook...');
-      
+
       // First, process the document with OCR
       final ocrResult = await processPrescriptionDocument(
         patientId,
@@ -735,7 +811,6 @@ class ApiService {
         'n8n_result': n8nResult,
         'timestamp': DateTime.now().toIso8601String(),
       };
-
     } catch (e) {
       print('❌ Error in processPrescriptionWithOCRAndN8N: $e');
       return {
@@ -755,21 +830,23 @@ class ApiService {
   ) async {
     try {
       print('🔍 Processing Prescription Document with OCR:');
-      print('🔍 URL: ${ApiConfig.baseUrl}/medication/process-prescription-document');
+      print(
+          '🔍 URL: ${ApiConfig.baseUrl}/medication/process-prescription-document');
       print('🔍 Patient ID: $patientId');
       print('🔍 Medication Name: $medicationName');
       print('🔍 Filename: $filename');
-      
+
       // Create multipart request
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('${ApiConfig.baseUrl}/medication/process-prescription-document'),
+        Uri.parse(
+            '${ApiConfig.baseUrl}/medication/process-prescription-document'),
       );
-      
+
       // Add form fields
       request.fields['patient_id'] = patientId;
       request.fields['medication_name'] = medicationName;
-      
+
       // Add file
       request.files.add(
         http.MultipartFile.fromBytes(
@@ -778,10 +855,10 @@ class ApiService {
           filename: filename,
         ),
       );
-      
+
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
-      
+
       if (response.statusCode == 200) {
         final result = json.decode(response.body);
         print('🔍 OCR Document Processing Successful: $result');
@@ -803,10 +880,11 @@ class ApiService {
   ) async {
     try {
       print('🔍 Processing Prescription Text:');
-      print('🔍 URL: ${ApiConfig.baseUrl}/medication/process-prescription-text');
+      print(
+          '🔍 URL: ${ApiConfig.baseUrl}/medication/process-prescription-text');
       print('🔍 Patient ID: $patientId');
       print('🔍 Text Length: ${prescriptionText.length}');
-      
+
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/medication/process-prescription-text'),
         headers: _headers,
@@ -821,7 +899,8 @@ class ApiService {
         print('🔍 Prescription Text Processing Successful: $result');
         return result;
       } else {
-        print('❌ Text Processing API Error: ${response.statusCode} - ${response.body}');
+        print(
+            '❌ Text Processing API Error: ${response.statusCode} - ${response.body}');
         return {'error': 'Text Processing API Error: ${response.statusCode}'};
       }
     } catch (e) {
@@ -834,10 +913,12 @@ class ApiService {
   Future<Map<String, dynamic>> getTabletHistory(String patientId) async {
     try {
       print('🔍 Getting Tablet History:');
-      print('🔍 URL: ${ApiConfig.baseUrl}/medication/get-tablet-history/$patientId');
-      
+      print(
+          '🔍 URL: ${ApiConfig.baseUrl}/medication/get-tablet-history/$patientId');
+
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/medication/get-tablet-history/$patientId'),
+        Uri.parse(
+            '${ApiConfig.baseUrl}/medication/get-tablet-history/$patientId'),
         headers: _headers,
       );
 
@@ -863,8 +944,9 @@ class ApiService {
     required String extractedText,
   }) async {
     try {
-      print('🚀 Processing prescription with medication folder webhook service...');
-      
+      print(
+          '🚀 Processing prescription with medication folder webhook service...');
+
       // Send to the new endpoint that uses medication folder's webhook service
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/medication/process-with-n8n-webhook'),
@@ -891,7 +973,6 @@ class ApiService {
           'response_body': response.body,
         };
       }
-
     } catch (e) {
       print('❌ Error in medication webhook service: $e');
       return {
@@ -910,13 +991,15 @@ class ApiService {
     required List<int> fileBytes,
   }) async {
     try {
-      print('🚀 Processing document with PaddleOCR for full text extraction...');
+      print(
+          '🚀 Processing document with PaddleOCR for full text extraction...');
       print('🔍 File size: ${fileBytes.length} bytes');
       print('🔍 Filename: $filename');
       print('🔍 Patient ID: $patientId');
       print('🔍 Medication: $medicationName');
-      print('🔍 Target URL: ${ApiConfig.baseUrl}/medication/process-with-paddleocr');
-      
+      print(
+          '🔍 Target URL: ${ApiConfig.baseUrl}/medication/process-with-paddleocr');
+
       // Validate file size (max 10MB)
       if (fileBytes.length > 10 * 1024 * 1024) {
         return {
@@ -925,20 +1008,20 @@ class ApiService {
           'error': 'File size: ${fileBytes.length} bytes exceeds 10MB limit',
         };
       }
-      
+
       // Create multipart request for file upload
       var request = http.MultipartRequest(
         'POST',
         Uri.parse('${ApiConfig.baseUrl}/medication/process-with-paddleocr'),
       );
-      
+
       // Add text fields
       request.fields['patient_id'] = patientId;
       request.fields['medication_name'] = medicationName;
-      
+
       // Add file to multipart request
       print('🔍 Adding file to multipart request...');
-      
+
       request.files.add(
         http.MultipartFile.fromBytes(
           'file',
@@ -946,50 +1029,51 @@ class ApiService {
           filename: filename,
         ),
       );
-      
+
       print('📤 Sending multipart request...');
       print('🔍 Request fields: ${request.fields}');
       print('🔍 Request files count: ${request.files.length}');
-      
+
       // Send request with timeout and retry logic
       http.StreamedResponse? streamedResponse;
       int retryCount = 0;
       const int maxRetries = 3;
-      
+
       while (retryCount < maxRetries) {
         try {
           print('🔄 Attempt ${retryCount + 1} of $maxRetries...');
-          
+
           streamedResponse = await request.send().timeout(
-            const Duration(seconds: 30), // 30 second timeout for file processing
+            const Duration(
+                seconds: 30), // 30 second timeout for file processing
             onTimeout: () {
               throw TimeoutException('File upload timed out after 30 seconds');
             },
           );
-          
-          print('📥 Received response stream, status: ${streamedResponse.statusCode}');
+
+          print(
+              '📥 Received response stream, status: ${streamedResponse.statusCode}');
           break; // Success, exit retry loop
-          
         } on TimeoutException catch (e) {
           retryCount++;
           print('⏰ Timeout on attempt $retryCount: $e');
-          
+
           if (retryCount >= maxRetries) {
             return {
               'success': false,
-              'message': 'File upload timed out after multiple attempts. The server might be busy.',
+              'message':
+                  'File upload timed out after multiple attempts. The server might be busy.',
               'error': e.toString(),
             };
           }
-          
+
           // Wait before retry
           await Future.delayed(Duration(seconds: retryCount * 2));
           continue;
-          
         } catch (e) {
           retryCount++;
           print('❌ Error on attempt $retryCount: $e');
-          
+
           if (retryCount >= maxRetries) {
             return {
               'success': false,
@@ -997,33 +1081,35 @@ class ApiService {
               'error': e.toString(),
             };
           }
-          
+
           // Wait before retry
           await Future.delayed(Duration(seconds: retryCount * 2));
           continue;
         }
       }
-      
+
       if (streamedResponse == null) {
         return {
           'success': false,
-          'message': 'Failed to get response from server after all retry attempts.',
+          'message':
+              'Failed to get response from server after all retry attempts.',
           'error': 'No response received',
         };
       }
-      
+
       // Process the response
       final response = await http.Response.fromStream(streamedResponse);
-      
+
       print('📄 Response status: ${response.statusCode}');
       print('📄 Response headers: ${response.headers}');
       print('📄 Response body length: ${response.body.length}');
-      
+
       if (response.statusCode == 200) {
         try {
           final result = json.decode(response.body);
           print('✅ PaddleOCR processing successful');
-          print('🔍 Full text content length: ${result['full_text_content']?.toString().length ?? 0}');
+          print(
+              '🔍 Full text content length: ${result['full_text_content']?.toString().length ?? 0}');
           print('🔍 Response keys: ${result.keys.toList()}');
           return result;
         } catch (e) {
@@ -1045,12 +1131,12 @@ class ApiService {
           'status_code': response.statusCode,
         };
       }
-
     } on TimeoutException catch (e) {
       print('❌ Timeout error in PaddleOCR processing: $e');
       return {
         'success': false,
-        'message': 'File upload timed out. The file might be too large or the server is busy.',
+        'message':
+            'File upload timed out. The file might be too large or the server is busy.',
         'error': e.toString(),
       };
     } on http.ClientException catch (e) {
@@ -1084,17 +1170,17 @@ class ApiService {
       print('🔍 Patient ID: $patientId');
       print('🔍 Medication: $medicationName');
       print('🔍 Target URL: ${ApiConfig.baseUrl}/medication/test-file-upload');
-      
+
       // Create multipart request for file upload test
       var request = http.MultipartRequest(
         'POST',
         Uri.parse('${ApiConfig.baseUrl}/medication/test-file-upload'),
       );
-      
+
       // Add text fields
       request.fields['patient_id'] = patientId;
       request.fields['medication_name'] = medicationName;
-      
+
       // Add file
       request.files.add(
         http.MultipartFile.fromBytes(
@@ -1103,9 +1189,9 @@ class ApiService {
           filename: filename,
         ),
       );
-      
+
       print('📤 Sending test multipart request...');
-      
+
       // Send request with timeout
       final streamedResponse = await request.send().timeout(
         const Duration(seconds: 15), // 15 second timeout for test
@@ -1113,14 +1199,15 @@ class ApiService {
           throw TimeoutException('File upload test timed out after 15 seconds');
         },
       );
-      
-      print('📥 Received test response, status: ${streamedResponse.statusCode}');
-      
+
+      print(
+          '📥 Received test response, status: ${streamedResponse.statusCode}');
+
       final response = await http.Response.fromStream(streamedResponse);
-      
+
       print('📄 Test response status: ${response.statusCode}');
       print('📄 Test response body: ${response.body}');
-      
+
       if (response.statusCode == 200) {
         final result = json.decode(response.body);
         print('✅ File upload test successful');
@@ -1133,7 +1220,6 @@ class ApiService {
           'response_body': response.body,
         };
       }
-
     } on TimeoutException catch (e) {
       print('❌ Timeout error in file upload test: $e');
       return {
@@ -1162,9 +1248,9 @@ class ApiService {
   Future<Map<String, dynamic>> testBackendConnectivity() async {
     final urls = ApiConfig.getAlternativeUrls();
     final results = <String, bool>{};
-    
+
     print('🔍 Testing backend connectivity...');
-    
+
     for (final url in urls) {
       try {
         print('📡 Testing: $url');
@@ -1172,7 +1258,7 @@ class ApiService {
           Uri.parse('$url/medication/test-status'),
           headers: {'Content-Type': 'application/json'},
         ).timeout(const Duration(seconds: 5));
-        
+
         if (response.statusCode == 200) {
           results[url] = true;
           print('✅ $url - CONNECTED');
@@ -1185,7 +1271,7 @@ class ApiService {
         print('❌ $url - ERROR: $e');
       }
     }
-    
+
     // Find the best working URL
     String? bestUrl;
     for (final entry in results.entries) {
@@ -1194,26 +1280,28 @@ class ApiService {
         break;
       }
     }
-    
+
     return {
       'success': bestUrl != null,
       'best_url': bestUrl,
       'all_results': results,
-      'recommendation': bestUrl != null 
-          ? 'Use: $bestUrl' 
+      'recommendation': bestUrl != null
+          ? 'Use: $bestUrl'
           : 'No backend URLs are accessible. Check if Flask server is running.',
     };
   }
 
   // Analyze food with GPT-4
-  Future<Map<String, dynamic>> analyzeFoodWithGPT4(String foodInput, int pregnancyWeek, String userId) async {
+  Future<Map<String, dynamic>> analyzeFoodWithGPT4(
+      String foodInput, int pregnancyWeek, String userId) async {
     try {
       print('🍎 Analyzing food with GPT-4:');
-      print('🌐 Calling: ${ApiConfig.nutritionBaseUrl}/nutrition/analyze-with-gpt4');
+      print(
+          '🌐 Calling: ${ApiConfig.nutritionBaseUrl}/nutrition/analyze-with-gpt4');
       print('🔍 Food input: $foodInput');
       print('🔍 Pregnancy week: $pregnancyWeek');
       print('🔍 User ID: $userId');
-      
+
       // Test backend connectivity first
       try {
         final healthResponse = await http.get(
@@ -1225,7 +1313,7 @@ class ApiService {
         print('❌ Backend health check failed: $e');
         return {'error': 'Backend not accessible'};
       }
-      
+
       final response = await http.post(
         Uri.parse('${ApiConfig.nutritionBaseUrl}/nutrition/analyze-with-gpt4'),
         headers: _headers,
@@ -1254,15 +1342,17 @@ class ApiService {
   Future<Map<String, dynamic>> getGPT4AnalysisHistory(String userId) async {
     try {
       print('🔍 Getting GPT-4 analysis history for user: $userId');
-      
+
       final response = await http.get(
-        Uri.parse('${ApiConfig.nutritionBaseUrl}/nutrition/get-food-entries/$userId'),
+        Uri.parse(
+            '${ApiConfig.nutritionBaseUrl}/nutrition/get-food-entries/$userId'),
         headers: _headers,
       );
 
       if (response.statusCode == 200) {
         final result = json.decode(response.body);
-        print('✅ GPT-4 analysis history retrieved: ${result['total_entries'] ?? 0} entries');
+        print(
+            '✅ GPT-4 analysis history retrieved: ${result['total_entries'] ?? 0} entries');
         return result;
       } else {
         print('❌ API Error: ${response.statusCode} - ${response.body}');
@@ -1275,18 +1365,16 @@ class ApiService {
   }
 
   // Transcribe audio using Whisper AI
-  Future<Map<String, dynamic>> transcribeAudio(String audioBase64, {String language = 'auto'}) async {
+  Future<Map<String, dynamic>> transcribeAudio(String audioBase64,
+      {String language = 'auto'}) async {
     try {
       print('🎤 Transcribing audio with language: $language');
-      
+
       final response = await http.post(
         Uri.parse('${ApiConfig.nutritionBaseUrl}/nutrition/transcribe'),
         headers: _headers,
-        body: json.encode({
-          'audio': audioBase64,
-          'language': language,
-          'method': 'whisper'
-        }),
+        body: json.encode(
+            {'audio': audioBase64, 'language': language, 'method': 'whisper'}),
       );
 
       if (response.statusCode == 200) {
@@ -1302,4 +1390,281 @@ class ApiService {
       return {'error': 'Network error: $e'};
     }
   }
-} 
+
+  // ==================== VITAL SIGNS API METHODS ====================
+
+  // Record a new vital sign for a patient
+  Future<Map<String, dynamic>> recordVitalSign(
+      Map<String, dynamic> vitalData) async {
+    try {
+      print('💓 Recording vital sign...');
+      print('📦 Vital data: $vitalData');
+
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/vitals/record'),
+        headers: _headers,
+        body: jsonEncode(vitalData),
+      );
+
+      print('📥 Record vital sign response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print('❌ API Error: ${response.statusCode}');
+        return {'success': false, 'error': 'API Error: ${response.statusCode}'};
+      }
+    } catch (e) {
+      print('❌ Network Error: $e');
+      return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
+
+  // Get vital signs history for a patient
+  Future<Map<String, dynamic>> getVitalSignsHistory(String patientId,
+      {int days = 30}) async {
+    try {
+      print('📊 Getting vital signs history for patient: $patientId');
+
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/vitals/history/$patientId?days=$days'),
+        headers: _headers,
+      );
+
+      print('📥 Vital signs history response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print('❌ API Error: ${response.statusCode}');
+        return {'success': false, 'error': 'API Error: ${response.statusCode}'};
+      }
+    } catch (e) {
+      print('❌ Network Error: $e');
+      return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
+
+  // Analyze vital signs for a patient
+  Future<Map<String, dynamic>> analyzeVitalSigns(String patientId,
+      {int days = 7}) async {
+    try {
+      print('🔍 Analyzing vital signs for patient: $patientId');
+
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/vitals/analyze'),
+        headers: _headers,
+        body: jsonEncode({
+          'patient_id': patientId,
+          'days': days,
+        }),
+      );
+
+      print('📥 Vital signs analysis response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print('❌ API Error: ${response.statusCode}');
+        return {'success': false, 'error': 'API Error: ${response.statusCode}'};
+      }
+    } catch (e) {
+      print('❌ Network Error: $e');
+      return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
+
+  // Get vital signs statistics for a patient
+  Future<Map<String, dynamic>> getVitalSignsStats(String patientId,
+      {int days = 30}) async {
+    try {
+      print('📈 Getting vital signs stats for patient: $patientId');
+
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/vitals/stats/$patientId?days=$days'),
+        headers: _headers,
+      );
+
+      print('📥 Vital signs stats response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print('❌ API Error: ${response.statusCode}');
+        return {'success': false, 'error': 'API Error: ${response.statusCode}'};
+      }
+    } catch (e) {
+      print('❌ Network Error: $e');
+      return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
+
+  // Get health summary for a patient
+  Future<Map<String, dynamic>> getHealthSummary(String patientId) async {
+    try {
+      print('🏥 Getting health summary for patient: $patientId');
+
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/vitals/health-summary/$patientId'),
+        headers: _headers,
+      );
+
+      print('📥 Health summary response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print('❌ API Error: ${response.statusCode}');
+        return {'success': false, 'error': 'API Error: ${response.statusCode}'};
+      }
+    } catch (e) {
+      print('❌ Network Error: $e');
+      return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
+
+  // Get vital signs alerts for a patient
+  Future<Map<String, dynamic>> getVitalSignsAlerts(String patientId,
+      {String? severity, bool? isResolved}) async {
+    try {
+      print('🚨 Getting vital signs alerts for patient: $patientId');
+
+      String url = '${ApiConfig.baseUrl}/vitals/alerts/$patientId';
+      List<String> queryParams = [];
+
+      if (severity != null) queryParams.add('severity=$severity');
+      if (isResolved != null) queryParams.add('is_resolved=$isResolved');
+
+      if (queryParams.isNotEmpty) {
+        url += '?${queryParams.join('&')}';
+      }
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+
+      print('📥 Vital signs alerts response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print('❌ API Error: ${response.statusCode}');
+        return {'success': false, 'error': 'API Error: ${response.statusCode}'};
+      }
+    } catch (e) {
+      print('❌ Network Error: $e');
+      return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
+
+  // ==================== VITAL OCR API METHODS ====================
+
+  // Upload document for vital OCR processing
+  Future<Map<String, dynamic>> uploadVitalOcrDocument(
+      String filePath, String fileName) async {
+    try {
+      print('📄 Uploading document for vital OCR: $fileName');
+
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('${ApiConfig.baseUrl}/vital-ocr/upload'),
+      );
+
+      // Add headers
+      request.headers.addAll(_headers);
+      request.headers.remove('Content-Type'); // Remove for multipart
+
+      // Add file
+      request.files.add(await http.MultipartFile.fromPath('file', filePath));
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      print('📥 Vital OCR upload response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print('❌ API Error: ${response.statusCode}');
+        return {'success': false, 'error': 'API Error: ${response.statusCode}'};
+      }
+    } catch (e) {
+      print('❌ Network Error: $e');
+      return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
+
+  // Process base64 image for vital OCR
+  Future<Map<String, dynamic>> processVitalOcrBase64(String base64Image) async {
+    try {
+      print('🖼️ Processing base64 image for vital OCR');
+
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/vital-ocr/base64'),
+        headers: _headers,
+        body: jsonEncode({'image': base64Image}),
+      );
+
+      print('📥 Vital OCR base64 response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print('❌ API Error: ${response.statusCode}');
+        return {'success': false, 'error': 'API Error: ${response.statusCode}'};
+      }
+    } catch (e) {
+      print('❌ Network Error: $e');
+      return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
+
+  // Get supported formats for vital OCR
+  Future<Map<String, dynamic>> getVitalOcrFormats() async {
+    try {
+      print('📋 Getting vital OCR supported formats');
+
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/vital-ocr/formats'),
+        headers: _headers,
+      );
+
+      print('📥 Vital OCR formats response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print('❌ API Error: ${response.statusCode}');
+        return {'success': false, 'error': 'API Error: ${response.statusCode}'};
+      }
+    } catch (e) {
+      print('❌ Network Error: $e');
+      return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
+
+  // Get vital OCR service status
+  Future<Map<String, dynamic>> getVitalOcrStatus() async {
+    try {
+      print('🔍 Getting vital OCR service status');
+
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/vital-ocr/status'),
+        headers: _headers,
+      );
+
+      print('📥 Vital OCR status response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print('❌ API Error: ${response.statusCode}');
+        return {'success': false, 'error': 'API Error: ${response.statusCode}'};
+      }
+    } catch (e) {
+      print('❌ Network Error: $e');
+      return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
+}

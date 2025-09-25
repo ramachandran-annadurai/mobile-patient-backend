@@ -12,20 +12,20 @@ class PatientSleepLogScreen extends StatefulWidget {
   final String email;
 
   const PatientSleepLogScreen({
-    Key? key,
+    super.key,
     required this.userId,
     required this.userRole,
     required this.username,
     required this.email,
-  }) : super(key: key);
+  });
 
   @override
   State<PatientSleepLogScreen> createState() => _PatientSleepLogScreenState();
 }
 
 class _PatientSleepLogScreenState extends State<PatientSleepLogScreen> {
-  TimeOfDay _startTime = TimeOfDay(hour: 22, minute: 0); // 10:00 PM
-  TimeOfDay _endTime = TimeOfDay(hour: 6, minute: 0); // 6:00 AM
+  TimeOfDay _startTime = const TimeOfDay(hour: 22, minute: 0); // 10:00 PM
+  TimeOfDay _endTime = const TimeOfDay(hour: 6, minute: 0); // 6:00 AM
   bool _smartAlarmEnabled = false;
   String? _selectedSleepRating;
   final TextEditingController _notesController = TextEditingController();
@@ -38,7 +38,7 @@ class _PatientSleepLogScreenState extends State<PatientSleepLogScreen> {
   void initState() {
     super.initState();
     _calculateTotalSleep();
-    
+
     // Debug logging to see what arguments were received
     print('🔍 Sleep Log Screen Debug - Received Arguments:');
     print('  Email: ${widget.email}');
@@ -54,7 +54,7 @@ class _PatientSleepLogScreenState extends State<PatientSleepLogScreen> {
   Duration get _totalSleepDuration {
     final start = DateTime(2024, 1, 1, _startTime.hour, _startTime.minute);
     final end = DateTime(2024, 1, 1, _startTime.hour, _startTime.minute);
-    
+
     Duration duration;
     if (_endTime.hour < _startTime.hour) {
       // Sleep crosses midnight
@@ -63,7 +63,7 @@ class _PatientSleepLogScreenState extends State<PatientSleepLogScreen> {
     } else {
       duration = end.difference(start);
     }
-    
+
     return duration;
   }
 
@@ -132,21 +132,25 @@ class _PatientSleepLogScreenState extends State<PatientSleepLogScreen> {
       // Get Patient ID from user info for precise patient linking
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userInfo = await authProvider.getCurrentUserInfo();
-      
+
       final String? patientId = userInfo['userId'];
       if (patientId == null) {
-        throw Exception('Patient ID not found. Please ensure you are logged in.');
+        throw Exception(
+            'Patient ID not found. Please ensure you are logged in.');
       }
-      
+
       final sleepData = {
         'userId': patientId, // Use Patient ID for precise linking
         'userRole': widget.userRole,
         'username': widget.username,
-        'startTime': '${_startTime.hour.toString().padLeft(2, '0')}:${_startTime.minute.toString().padLeft(2, '0')}',
-        'endTime': '${_endTime.hour.toString().padLeft(2, '0')}:${_endTime.minute.toString().padLeft(2, '0')}',
+        'startTime':
+            '${_startTime.hour.toString().padLeft(2, '0')}:${_startTime.minute.toString().padLeft(2, '0')}',
+        'endTime':
+            '${_endTime.hour.toString().padLeft(2, '0')}:${_endTime.minute.toString().padLeft(2, '0')}',
         'totalSleep': _totalSleepText,
         'smartAlarmEnabled': _smartAlarmEnabled,
-        'optimalWakeUpTime': '${_optimalWakeUpTime.hour.toString().padLeft(2, '0')}:${_optimalWakeUpTime.minute.toString().padLeft(2, '0')}',
+        'optimalWakeUpTime':
+            '${_optimalWakeUpTime.hour.toString().padLeft(2, '0')}:${_optimalWakeUpTime.minute.toString().padLeft(2, '0')}',
         'sleepRating': _selectedSleepRating,
         'notes': _notesController.text.trim(),
         'timestamp': DateTime.now().toIso8601String(),
@@ -176,7 +180,7 @@ class _PatientSleepLogScreenState extends State<PatientSleepLogScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Navigate back to daily log page
         Navigator.pop(context);
       } else {
@@ -219,7 +223,7 @@ class _PatientSleepLogScreenState extends State<PatientSleepLogScreen> {
             // Sleep Time Input Section
             _buildSectionTitle('Sleep Time'),
             const SizedBox(height: 15),
-            
+
             // Start Time
             _buildTimeInput(
               label: 'Start Time',
@@ -227,7 +231,7 @@ class _PatientSleepLogScreenState extends State<PatientSleepLogScreen> {
               onTap: () => _selectTime(context, true),
             ),
             const SizedBox(height: 15),
-            
+
             // End Time
             _buildTimeInput(
               label: 'End Time',
@@ -235,7 +239,7 @@ class _PatientSleepLogScreenState extends State<PatientSleepLogScreen> {
               onTap: () => _selectTime(context, false),
             ),
             const SizedBox(height: 10),
-            
+
             // Total Sleep Display
             Container(
               width: double.infinity,
@@ -254,13 +258,13 @@ class _PatientSleepLogScreenState extends State<PatientSleepLogScreen> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 30),
-            
+
             // Smart Alarm Section
             _buildSectionTitle('Smart Alarm'),
             const SizedBox(height: 15),
-            
+
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -302,9 +306,9 @@ class _PatientSleepLogScreenState extends State<PatientSleepLogScreen> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 15),
-            
+
             // Smart Alarm Toggle
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -327,13 +331,13 @@ class _PatientSleepLogScreenState extends State<PatientSleepLogScreen> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 30),
-            
+
             // Sleep Rating Section
             _buildSectionTitle('Rate Your Sleep'),
             const SizedBox(height: 15),
-            
+
             Wrap(
               spacing: 12,
               runSpacing: 12,
@@ -346,7 +350,8 @@ class _PatientSleepLogScreenState extends State<PatientSleepLogScreen> {
                     });
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
                     decoration: BoxDecoration(
                       color: isSelected ? Colors.purple : Colors.transparent,
                       borderRadius: BorderRadius.circular(25),
@@ -367,13 +372,13 @@ class _PatientSleepLogScreenState extends State<PatientSleepLogScreen> {
                 );
               }).toList(),
             ),
-            
+
             const SizedBox(height: 30),
-            
+
             // Notes Section
             _buildSectionTitle('Notes'),
             const SizedBox(height: 15),
-            
+
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
@@ -390,9 +395,9 @@ class _PatientSleepLogScreenState extends State<PatientSleepLogScreen> {
                 style: const TextStyle(fontSize: 16),
               ),
             ),
-            
+
             const SizedBox(height: 40),
-            
+
             // Save Button
             SizedBox(
               width: double.infinity,
@@ -486,4 +491,4 @@ class _PatientSleepLogScreenState extends State<PatientSleepLogScreen> {
     _notesController.dispose();
     super.dispose();
   }
-} 
+}

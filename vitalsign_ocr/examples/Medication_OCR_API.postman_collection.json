@@ -1,0 +1,705 @@
+{
+	"info": {
+		"_postman_id": "medication-ocr-api-collection",
+		"name": "Medication OCR API",
+		"description": "Complete Postman collection for testing the Medication OCR API endpoints including single-click OCR processing, webhook delivery, health checks, and webhook configurations.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "medication-ocr-api"
+	},
+	"item": [
+		{
+			"name": "Health & Status",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Basic health check endpoint for load balancers and monitoring"
+					},
+					"response": []
+				},
+				{
+					"name": "Root Service Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								""
+							]
+						},
+						"description": "Root endpoint providing service information and available endpoints"
+					},
+					"response": []
+				}
+			],
+			"description": "Health monitoring and service information endpoints"
+		},
+		{
+			"name": "Enhanced OCR",
+			"item": [
+				{
+					"name": "Enhanced OCR Upload",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": [],
+									"description": "Upload image file (JPEG, PNG, etc.) or document (PDF, DOC, DOCX, TXT)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/ocr/upload",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"ocr",
+								"upload"
+							]
+						},
+						"description": "Enhanced OCR endpoint that can process various file types including images, PDFs, and documents"
+					},
+					"response": [
+						{
+							"name": "Successful OCR Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "file",
+											"type": "file",
+											"src": [],
+											"description": "Upload image file (JPEG, PNG, etc.) or document (PDF, DOC, DOCX, TXT)"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/ocr/enhanced/upload",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"ocr",
+										"enhanced",
+										"upload"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"success\": true,\n  \"filename\": \"Screenshot 2025-08-16 141924.png\",\n  \"text_count\": 67,\n  \"extracted_text\": \"PRESCRIPTION TEMPLATE\\nPrescription No. 0001\\nPrescription Date November 8, 2021\\nPatient Information\\nName: Anne Burton\\nAge: 30\\nPhone Number: (123) 123-4567\\nDate of Birth: Wednesday, November 8, 1989\\nEmail: anne.burton@noemailtest.com\\nGender: Female\\nAddress: 1372 Payne Street, Richlands, VA, 24641\\nAllergies: Seafood\\nNotable Health Condition: None\\nList of Prescribed Medications\\nMedication Name: Expectorant, Purpose: Removes phlegm, Dosage: 1 tablet, Route: Oral, Frequency: Every 4 hours\\nMedication Name: Paracetamol, Purpose: For fever, Dosage: 1 tablet, Route: Oral, Frequency: Every 4 hours\\nMedication Name: Anti-biotic, Purpose: Bacterial infection, Dosage: 500mg, Route: Oral, Frequency: Every 8 hours\\nMedication Name: Vitamin C, Purpose: Immune system, Dosage: 500mg, Route: Oral, Frequency: Once a day\\nMedication Name: Vitamin D, Purpose: Immune System, Dosage: 1 tablet, Route: Oral, Frequency: Once a day\\nPhysician Name: Leslie Holden\\nPhysician Phone Number: (112) 312-3456\\nPhysician Signature: As\\nPhysician Email: leslie.h@noemail.com\\nNovember 9, 2021\",\n  \"full_content\": \"This is a comprehensive prescription template containing patient information, medical history, prescribed medications with detailed dosage instructions, and physician contact details.\",\n  \"results\": [\n    {\n      \"text\": \"PRESCRIPTION TEMPLATE\",\n      \"confidence\": 0.9817286133766174,\n      \"bbox\": [[113, 31], [335, 31], [335, 46], [113, 46]]\n    },\n    {\n      \"text\": \"Prescription No.\",\n      \"confidence\": 0.9848132133483887,\n      \"bbox\": [[61, 71], [123, 71], [123, 82], [61, 82]]\n    },\n    {\n      \"text\": \"0001\",\n      \"confidence\": 0.9986476898193359,\n      \"bbox\": [[60, 84], [82, 84], [82, 96], [60, 96]]\n    },\n    {\n      \"text\": \"November 8, 2021\",\n      \"confidence\": 0.9994931221008301,\n      \"bbox\": [[225, 85], [297, 85], [297, 95], [225, 95]]\n    },\n    {\n      \"text\": \"Patient Information\",\n      \"confidence\": 0.9999281167984009,\n      \"bbox\": [[61, 108], [145, 108], [145, 119], [61, 119]]\n    },\n    {\n      \"text\": \"Name: Anne Burton\",\n      \"confidence\": 0.9998162984848022,\n      \"bbox\": [[60, 125], [112, 125], [112, 148], [60, 148]]\n    },\n    {\n      \"text\": \"Age: 30\",\n      \"confidence\": 0.9836610555648804,\n      \"bbox\": [[60, 125], [112, 125], [112, 148], [60, 148]]\n    },\n    {\n      \"text\": \"Phone Number: (123) 123-4567\",\n      \"confidence\": 0.9877447485923767,\n      \"bbox\": [[60, 153], [119, 153], [119, 177], [60, 177]]\n    },\n    {\n      \"text\": \"Date of Birth: Wednesday, November 8, 1989\",\n      \"confidence\": 0.975077748298645,\n      \"bbox\": [[224, 167], [347, 167], [347, 177], [224, 177]]\n    },\n    {\n      \"text\": \"Email: anne.burton@noemailtest.com\",\n      \"confidence\": 0.9938861131668091,\n      \"bbox\": [[61, 183], [181, 183], [181, 207], [61, 207]]\n    },\n    {\n      \"text\": \"Gender: Female\",\n      \"confidence\": 0.9966123700141907,\n      \"bbox\": [[224, 181], [256, 181], [256, 208], [224, 208]]\n    },\n    {\n      \"text\": \"Address: 1372 Payne Street, Richlands, VA, 24641\",\n      \"confidence\": 0.9952965974807739,\n      \"bbox\": [[59, 214], [141, 214], [141, 246], [59, 246]]\n    },\n    {\n      \"text\": \"Allergies: Seafood\",\n      \"confidence\": 0.9992453455924988,\n      \"bbox\": [[58, 251], [97, 251], [97, 279], [58, 279]]\n    },\n    {\n      \"text\": \"Notable Health Condition: None\",\n      \"confidence\": 0.9738696813583374,\n      \"bbox\": [[225, 254], [324, 254], [324, 280], [225, 280]]\n    },\n    {\n      \"text\": \"List of Prescribed Medications\",\n      \"confidence\": 0.9996507167816162,\n      \"bbox\": [[61, 289], [186, 289], [186, 301], [61, 301]]\n    },\n    {\n      \"text\": \"Medication Name: Expectorant, Purpose: Removes phlegm, Dosage: 1 tablet, Route: Oral, Frequency: Every 4 hours\",\n      \"confidence\": 0.9944614171981812,\n      \"bbox\": [[72, 311], [377, 311], [377, 348], [72, 348]]\n    },\n    {\n      \"text\": \"Medication Name: Paracetamol, Purpose: For fever, Dosage: 1 tablet, Route: Oral, Frequency: Every 4 hours\",\n      \"confidence\": 0.990095853805542,\n      \"bbox\": [[72, 311], [377, 311], [377, 362], [72, 362]]\n    },\n    {\n      \"text\": \"Medication Name: Anti-biotic, Purpose: Bacterial infection, Dosage: 500mg, Route: Oral, Frequency: Every 8 hours\",\n      \"confidence\": 0.9886342883110046,\n      \"bbox\": [[72, 311], [377, 311], [377, 382], [72, 382]]\n    },\n    {\n      \"text\": \"Medication Name: Vitamin C, Purpose: Immune system, Dosage: 500mg, Route: Oral, Frequency: Once a day\",\n      \"confidence\": 0.9990479946136475,\n      \"bbox\": [[72, 311], [377, 311], [377, 403], [72, 403]]\n    },\n    {\n      \"text\": \"Medication Name: Vitamin D, Purpose: Immune System, Dosage: 1 tablet, Route: Oral, Frequency: Once a day\",\n      \"confidence\": 0.9987873435020447,\n      \"bbox\": [[72, 311], [377, 311], [377, 417], [72, 417]]\n    },\n    {\n      \"text\": \"Physician Name: Leslie Holden\",\n      \"confidence\": 0.9964508414268494,\n      \"bbox\": [[61, 438], [115, 438], [115, 461], [61, 461]]\n    },\n    {\n      \"text\": \"Physician Phone Number: (112) 312-3456\",\n      \"confidence\": 0.9869160056114197,\n      \"bbox\": [[224, 437], [285, 437], [285, 461], [224, 461]]\n    },\n    {\n      \"text\": \"Physician Signature: As\",\n      \"confidence\": 0.9111484289169312,\n      \"bbox\": [[61, 467], [139, 467], [139, 500], [61, 500]]\n    },\n    {\n      \"text\": \"Physician Email: leslie.h@noemail.com\",\n      \"confidence\": 0.9758797883987427,\n      \"bbox\": [[224, 468], [310, 468], [310, 491], [224, 491]]\n    },\n    {\n      \"text\": \"November 9, 2021\",\n      \"confidence\": 0.9988369941711426,\n      \"bbox\": [[62, 514], [132, 514], [132, 525], [62, 525]]\n    }\n  ],\n  \"file_type\": \"IMAGE\",\n  \"total_pages\": 1,\n  \"processing_summary\": {\n    \"total_pages\": 1,\n    \"native_text_pages\": 0,\n    \"ocr_pages\": 1,\n    \"mixed_processing\": false\n  },\n  \"webhook_delivery\": {\n    \"status\": \"completed\",\n    \"results\": [],\n    \"timestamp\": \"2025-08-26T10:16:12.680540\"\n  }\n}"
+						}
+					]
+				},
+				{
+					"name": "Enhanced OCR Base64",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"image\": \"{{base64_image}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/ocr/base64",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"ocr",
+								"base64"
+							]
+						},
+						"description": "Enhanced OCR endpoint that accepts base64 encoded images or documents"
+					},
+					"response": [
+						{
+							"name": "Successful Base64 OCR Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"image\": \"{{base64_image}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/ocr/enhanced/base64",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"ocr",
+										"enhanced",
+										"base64"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"success\": true,\n  \"filename\": \"base64_medication_image\",\n  \"text_count\": 4,\n  \"extracted_text\": \"Paracetamol 500mg\\nTake 2 tablets every 6 hours\\nMaximum 8 tablets per day\\nKeep out of reach of children\",\n  \"full_content\": \"This medication label contains pain relief medication with dosage instructions, maximum daily limit, and safety warnings.\",\n  \"results\": [\n    {\n      \"text\": \"Paracetamol 500mg\",\n      \"confidence\": 0.94,\n      \"bbox\": [[15, 25], [220, 25], [220, 45], [15, 45]],\n      \"type\": \"medication_name\"\n    },\n    {\n      \"text\": \"Take 2 tablets every 6 hours\",\n      \"confidence\": 0.91,\n      \"bbox\": [[15, 55], [280, 55], [280, 75], [15, 75]],\n      \"type\": \"dosage_instruction\"\n    },\n    {\n      \"text\": \"Maximum 8 tablets per day\",\n      \"confidence\": 0.89,\n      \"bbox\": [[15, 85], [260, 85], [260, 105], [15, 105]],\n      \"type\": \"daily_limit\"\n    },\n    {\n      \"text\": \"Keep out of reach of children\",\n      \"confidence\": 0.93,\n      \"bbox\": [[15, 115], [270, 115], [270, 135], [15, 135]],\n      \"type\": \"safety_warning\"\n    }\n  ],\n  \"processing_time\": 1.87,\n  \"file_size\": 184320,\n  \"file_type\": \"base64_image\"\n}"
+						}
+					]
+				}
+			],
+			"description": "Enhanced OCR endpoints supporting multiple file types and formats"
+		},
+		{
+			"name": "Standard OCR",
+			"item": [
+				{
+					"name": "Standard OCR Upload",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": [],
+									"description": "Upload image file (JPEG, PNG, etc.)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/ocr/upload",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"ocr",
+								"upload"
+							]
+						},
+						"description": "Standard OCR endpoint for image processing using PaddleOCR"
+					},
+					"response": [
+						{
+							"name": "Successful Standard OCR Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "file",
+											"type": "file",
+											"src": [],
+											"description": "Upload image file (JPEG, PNG, etc.)"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/ocr/upload",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"ocr",
+										"upload"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"success\": true,\n  \"filename\": \"medication_label.jpg\",\n  \"text_count\": 6,\n  \"extracted_text\": \"Ibuprofen 200mg\\nTake 1-2 tablets with food\\nDo not exceed 6 tablets in 24 hours\\nStore in a cool, dry place\\nExpires: 12/2025\\nManufacturer: PharmaCorp\",\n  \"full_content\": \"This medication label contains anti-inflammatory medication with dosage instructions, safety warnings, storage conditions, expiration date, and manufacturer information.\",\n  \"results\": [\n    {\n      \"text\": \"Ibuprofen 200mg\",\n      \"confidence\": 0.96,\n      \"bbox\": [[20, 30], [240, 30], [240, 50], [20, 50]],\n      \"type\": \"medication_name\"\n    },\n    {\n      \"text\": \"Take 1-2 tablets with food\",\n      \"confidence\": 0.90,\n      \"bbox\": [[20, 60], [280, 60], [280, 80], [20, 80]],\n      \"type\": \"dosage_instruction\"\n    },\n    {\n      \"text\": \"Do not exceed 6 tablets in 24 hours\",\n      \"confidence\": 0.87,\n      \"bbox\": [[20, 90], [320, 90], [320, 110], [20, 110]],\n      \"type\": \"daily_limit\"\n    },\n    {\n      \"text\": \"Store in a cool, dry place\",\n      \"confidence\": 0.92,\n      \"bbox\": [[20, 120], [260, 120], [260, 140], [20, 140]],\n      \"type\": \"storage_instruction\"\n    },\n    {\n      \"text\": \"Expires: 12/2025\",\n      \"confidence\": 0.94,\n      \"bbox\": [[20, 150], [200, 150], [200, 170], [20, 170]],\n      \"type\": \"expiration_date\"\n    },\n    {\n      \"text\": \"Manufacturer: PharmaCorp\",\n      \"confidence\": 0.89,\n      \"bbox\": [[20, 180], [280, 180], [280, 200], [20, 200]],\n      \"type\": \"manufacturer_info\"\n    }\n  ],\n  \"processing_time\": 1.45,\n  \"file_size\": 156240,\n  \"file_type\": \"image/jpeg\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Standard OCR Base64",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"image\": \"{{base64_image}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/ocr/base64",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"ocr",
+								"base64"
+							]
+						},
+						"description": "Standard OCR endpoint that accepts base64 encoded images"
+					},
+					"response": [
+						{
+							"name": "Successful Base64 Standard OCR Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"image\": \"{{base64_image}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/ocr/base64",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"ocr",
+										"base64"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"success\": true,\n  \"filename\": \"base64_medication_image\",\n  \"text_count\": 3,\n  \"extracted_text\": \"Amoxicillin 250mg\\nTake 1 capsule three times daily\\nComplete the full course\",\n  \"full_content\": \"This medication label contains antibiotic medication with dosage instructions and important completion reminder.\",\n  \"results\": [\n    {\n      \"text\": \"Amoxicillin 250mg\",\n      \"confidence\": 0.93,\n      \"bbox\": [[25, 35], [230, 35], [230, 55], [25, 55]],\n      \"type\": \"medication_name\"\n    },\n    {\n      \"text\": \"Take 1 capsule three times daily\",\n      \"confidence\": 0.88,\n      \"bbox\": [[25, 65], [290, 65], [290, 85], [25, 85]],\n      \"type\": \"dosage_instruction\"\n    },\n    {\n      \"text\": \"Complete the full course\",\n      \"confidence\": 0.91,\n      \"bbox\": [[25, 95], [250, 95], [250, 115], [25, 115]],\n      \"type\": \"completion_reminder\"\n    }\n  ],\n  \"processing_time\": 1.23,\n  \"file_size\": 128640,\n  \"file_type\": \"base64_image\"\n}"
+						}
+					]
+				}
+			],
+			"description": "Standard OCR endpoints for image processing"
+		},
+		{
+			"name": "Webhook Management",
+			"item": [
+				{
+					"name": "Get Webhook Configs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/webhook/configs",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"webhook",
+								"configs"
+							]
+						},
+						"description": "Retrieve all webhook configurations"
+					},
+					"response": [
+						{
+							"name": "Webhook Configs List",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/webhook/configs",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"webhook",
+										"configs"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"webhooks\": [\n    {\n      \"id\": \"fba6b54c-97a8-4a11-a7d1-e72e2eb5dd74\",\n      \"name\": \"Default n8n Webhook\",\n      \"url\": \"https://n8n.srv795087.hstgr.cloud/webhook/bf25c478-c4a9-44c5-8f43-08c3fcae51f9\",\n      \"enabled\": true,\n      \"method\": \"POST\",\n      \"headers\": {\n        \"Content-Type\": \"application/json\"\n      },\n      \"timeout\": 30,\n      \"retry_attempts\": 3,\n      \"retry_delay\": 1,\n      \"created_at\": \"2025-08-16T09:55:13.775647\",\n      \"updated_at\": \"2025-08-16T09:55:13.775647\"\n    },\n    {\n      \"id\": \"5564be46-df08-409b-9df0-bbf62bd1577d\",\n      \"name\": \"n8n Webhook\",\n      \"url\": \"https://n8n.srv795087.hstgr.cloud/webhook/bf25c478-c4a9-44c5-8f43-08c3fcae51f9\",\n      \"enabled\": true,\n      \"method\": \"POST\",\n      \"headers\": {},\n      \"timeout\": 30,\n      \"retry_attempts\": 3,\n      \"retry_delay\": 1,\n      \"created_at\": \"2025-08-16T10:01:44.028362\",\n      \"updated_at\": \"2025-08-16T10:01:44.028362\"\n    }\n  ],\n  \"total\": 2,\n  \"active_count\": 2\n}"
+						}
+					]
+				},
+				{
+					"name": "Create Webhook Config",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Test Webhook\",\n  \"url\": \"https://webhook.site/your-unique-id\",\n  \"enabled\": true,\n  \"description\": \"Test webhook for OCR results\",\n  \"headers\": {\n    \"Content-Type\": \"application/json\",\n    \"X-API-Key\": \"your-api-key-here\"\n  },\n  \"timeout\": 30,\n  \"retry_attempts\": 3,\n  \"retry_delay\": 5\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/webhook/configs",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"webhook",
+								"configs"
+							]
+						},
+						"description": "Create a new webhook configuration for testing OCR results"
+					},
+					"response": [
+						{
+							"name": "Successful Webhook Creation",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Test Webhook\",\n  \"url\": \"https://webhook.site/your-unique-id\",\n  \"enabled\": true,\n  \"description\": \"Test webhook for OCR results\",\n  \"headers\": {\n    \"Content-Type\": \"application/json\",\n    \"X-API-Key\": \"your-api-key-here\"\n  },\n  \"timeout\": 30,\n  \"retry_attempts\": 3,\n  \"retry_delay\": 5\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/webhook/configs",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"webhook",
+										"configs"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"id\": \"new-webhook-id-123\",\n  \"name\": \"Test Webhook\",\n  \"url\": \"https://webhook.site/your-unique-id\",\n  \"enabled\": true,\n  \"description\": \"Test webhook for OCR results\",\n  \"method\": \"POST\",\n  \"headers\": {\n    \"Content-Type\": \"application/json\",\n    \"X-API-Key\": \"your-api-key-here\"\n  },\n  \"timeout\": 30,\n  \"retry_attempts\": 3,\n  \"retry_delay\": 5,\n  \"payload_template\": {},\n  \"filters\": {},\n  \"created_at\": \"2025-08-26T15:45:00.000000\",\n  \"updated_at\": \"2025-08-26T15:45:00.000000\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Webhook Config",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated n8n Webhook\",\n  \"url\": \"https://your-n8n-instance.com/webhook/ocr-result\",\n  \"enabled\": true,\n  \"description\": \"Updated webhook configuration\",\n  \"headers\": {\n    \"Authorization\": \"Bearer updated-token-here\"\n  },\n  \"timeout\": 45,\n  \"retry_count\": 5,\n  \"retry_delay\": 10\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/webhook/configs/{{webhook_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"webhook",
+								"configs",
+								"{{webhook_id}}"
+							]
+						},
+						"description": "Update an existing webhook configuration"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Webhook Config",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/webhook/configs/{{webhook_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"webhook",
+								"configs",
+								"{{webhook_id}}"
+							]
+						},
+						"description": "Delete a webhook configuration"
+					},
+					"response": []
+				}
+			],
+			"description": "Webhook configuration management endpoints"
+		},
+		{
+			"name": "API Documentation",
+			"item": [
+				{
+					"name": "Swagger UI",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/docs",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"docs"
+							]
+						},
+						"description": "Interactive API documentation (Swagger UI)"
+					},
+					"response": []
+				},
+				{
+					"name": "ReDoc",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/redoc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"redoc"
+							]
+						},
+						"description": "Alternative API documentation (ReDoc)"
+					},
+					"response": []
+				}
+			],
+			"description": "API documentation endpoints"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Pre-request script for common setup",
+					"console.log('Setting up request for: ' + pm.request.name);",
+					"",
+					"// Set default headers if not present",
+					"if (!pm.request.headers.has('User-Agent')) {",
+					"    pm.request.headers.add({",
+					"        key: 'User-Agent',",
+					"        value: 'PostmanRuntime/7.32.3'",
+					"    });",
+					"}",
+					"",
+					"// Log request details",
+					"console.log('Method: ' + pm.request.method);",
+					"console.log('URL: ' + pm.request.url.toString());"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Post-request test script",
+					"pm.test('Status code is 200', function () {",
+					"    pm.response.to.have.status(200);",
+					"});",
+					"",
+					"pm.test('Response time is less than 5000ms', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+					"});",
+					"",
+					"pm.test('Response has content', function () {",
+					"    pm.expect(pm.response.text()).to.not.be.empty;",
+					"});",
+					"",
+					"// Test for JSON response if applicable",
+					"if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+					"    pm.test('Response is valid JSON', function () {",
+					"        pm.response.to.be.json;",
+					"    });",
+					"",
+					"    const responseJson = pm.response.json();",
+					"    ",
+					"    // Test for success field if present",
+					"    if (responseJson.hasOwnProperty('success')) {",
+					"        pm.test('Success field is present', function () {",
+					"            pm.expect(responseJson.success).to.be.a('boolean');",
+					"        });",
+					"    }",
+					"",
+					"    // Test for results field if present",
+					"    if (responseJson.hasOwnProperty('results')) {",
+					"        pm.test('Results field is present', function () {",
+					"            pm.expect(responseJson.results).to.be.an('array');",
+					"        });",
+					"    }",
+					"}",
+					"",
+					"// Log response details",
+					"console.log('Response Status: ' + pm.response.status);",
+					"console.log('Response Time: ' + pm.response.responseTime + 'ms');",
+					"console.log('Response Size: ' + pm.response.size().body + ' bytes');"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string",
+			"description": "Base URL for the Medication OCR API"
+		},
+		{
+			"key": "base64_image",
+			"value": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+			"type": "string",
+			"description": "Sample base64 encoded 1x1 pixel image for testing"
+		},
+		{
+			"key": "webhook_id",
+			"value": "your-webhook-id-here",
+			"type": "string",
+			"description": "Webhook configuration ID for update/delete operations"
+		}
+	]
+}

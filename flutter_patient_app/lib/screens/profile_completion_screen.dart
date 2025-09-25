@@ -10,7 +10,8 @@ class ProfileCompletionScreen extends StatefulWidget {
   const ProfileCompletionScreen({super.key});
 
   @override
-  State<ProfileCompletionScreen> createState() => _ProfileCompletionScreenState();
+  State<ProfileCompletionScreen> createState() =>
+      _ProfileCompletionScreenState();
 }
 
 class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
@@ -24,13 +25,22 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
   final _lastPeriodDateController = TextEditingController();
   final _weightController = TextEditingController();
   final _heightController = TextEditingController();
-  
+
   String _selectedBloodType = 'A+';
   bool _isPregnant = false;
   DateTime? _lastPeriodDate;
   bool _isLoading = false;
 
-  final List<String> _bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+  final List<String> _bloodTypes = [
+    'A+',
+    'A-',
+    'B+',
+    'B-',
+    'AB+',
+    'AB-',
+    'O+',
+    'O-'
+  ];
 
   @override
   void dispose() {
@@ -49,17 +59,23 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
   Future<void> _selectDate(BuildContext context, bool isLastPeriod) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: isLastPeriod ? DateTime.now().subtract(const Duration(days: 90)) : DateTime.now().subtract(const Duration(days: 6570)), // 18 years ago
-      firstDate: isLastPeriod ? DateTime.now().subtract(const Duration(days: 365)) : DateTime(1900),
+      initialDate: isLastPeriod
+          ? DateTime.now().subtract(const Duration(days: 90))
+          : DateTime.now().subtract(const Duration(days: 6570)), // 18 years ago
+      firstDate: isLastPeriod
+          ? DateTime.now().subtract(const Duration(days: 365))
+          : DateTime(1900),
       lastDate: DateTime.now(),
     );
     if (picked != null) {
       setState(() {
         if (isLastPeriod) {
           _lastPeriodDate = picked;
-          _lastPeriodDateController.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+          _lastPeriodDateController.text =
+              "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
         } else {
-          _dateOfBirthController.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+          _dateOfBirthController.text =
+              "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
         }
       });
     }
@@ -82,7 +98,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
       'date_of_birth': _dateOfBirthController.text.trim(),
       'blood_type': _selectedBloodType,
       'is_pregnant': _isPregnant,
-      'last_period_date': _lastPeriodDate != null 
+      'last_period_date': _lastPeriodDate != null
           ? "${_lastPeriodDate!.year}-${_lastPeriodDate!.month.toString().padLeft(2, '0')}-${_lastPeriodDate!.day.toString().padLeft(2, '0')}"
           : '',
       'emergency_name': _emergencyNameController.text.trim(),
@@ -99,7 +115,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
       weight: _weightController.text.trim(),
       height: _heightController.text.trim(),
       isPregnant: _isPregnant,
-      lastPeriodDate: _lastPeriodDate != null 
+      lastPeriodDate: _lastPeriodDate != null
           ? "${_lastPeriodDate!.year}-${_lastPeriodDate!.month.toString().padLeft(2, '0')}-${_lastPeriodDate!.day.toString().padLeft(2, '0')}"
           : null,
       emergencyName: _emergencyNameController.text.trim(),
@@ -157,7 +173,8 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                         onPressed: () {
                           Navigator.of(context).pop(); // Close dialog
                           // Perform logout
-                          Provider.of<AuthProvider>(context, listen: false).logout();
+                          Provider.of<AuthProvider>(context, listen: false)
+                              .logout();
                           Navigator.pushReplacementNamed(context, '/login');
                         },
                         child: const Text('Logout'),
@@ -179,9 +196,9 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 20),
-                
+
                 // Icon and Title
-                Icon(
+                const Icon(
                   Icons.person_add,
                   size: 70,
                   color: AppColors.primary,
@@ -190,17 +207,17 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                 Text(
                   'Complete Your Profile',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Please provide your basic information to complete your profile',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                        color: AppColors.textSecondary,
+                      ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
@@ -209,9 +226,9 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                 Text(
                   'Personal Information',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: 16),
 
@@ -330,9 +347,9 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                 Text(
                   'Pregnancy Information',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: 16),
 
@@ -360,7 +377,8 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                       prefixIcon: Icons.calendar_today,
                       enabled: false,
                       validator: (value) {
-                        if (_isPregnant && (value == null || value.trim().isEmpty)) {
+                        if (_isPregnant &&
+                            (value == null || value.trim().isEmpty)) {
                           return 'Please select your last period date';
                         }
                         return null;
@@ -374,9 +392,9 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                 Text(
                   'Emergency Contact',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: 16),
 
@@ -432,7 +450,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                   isLoading: _isLoading,
                   text: 'Complete Profile',
                 ),
-                
+
                 // Extra space at bottom to prevent overflow
                 const SizedBox(height: 20),
               ],
@@ -442,4 +460,4 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
       ),
     );
   }
-} 
+}

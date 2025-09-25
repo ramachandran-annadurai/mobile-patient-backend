@@ -14,10 +14,10 @@ class AppDateUtils {
             final day = int.parse(parts[0]);
             final month = int.parse(parts[1]);
             final year = int.parse(parts[2]);
-            return '${day.toString().padLeft(2, '0')}/${month.toString().padLeft(2, '0')}/${year}';
+            return '${day.toString().padLeft(2, '0')}/${month.toString().padLeft(2, '0')}/$year';
           }
         }
-        
+
         // Try to parse as ISO format
         try {
           final dateTime = DateTime.parse(date);
@@ -37,17 +37,18 @@ class AppDateUtils {
   static String formatDateTime(String dateTimeString) {
     try {
       // Check if it's already in DD/MM/YYYY format
-      if (dateTimeString.contains('/') && dateTimeString.split('/').length == 3) {
+      if (dateTimeString.contains('/') &&
+          dateTimeString.split('/').length == 3) {
         // Parse DD/MM/YYYY format
         final parts = dateTimeString.split('/');
         if (parts.length == 3) {
           final day = int.parse(parts[0]);
           final month = int.parse(parts[1]);
           final year = int.parse(parts[2]);
-          return '${day.toString().padLeft(2, '0')}/${month.toString().padLeft(2, '0')}/${year}';
+          return '${day.toString().padLeft(2, '0')}/${month.toString().padLeft(2, '0')}/$year';
         }
       }
-      
+
       // Try to parse as ISO format
       try {
         final dateTime = DateTime.parse(dateTimeString);
@@ -78,7 +79,7 @@ class AppDateUtils {
             return DateTime(year, month, day);
           }
         }
-        
+
         // Try to parse as ISO format
         return DateTime.parse(date);
       }
@@ -101,10 +102,14 @@ class AppDateUtils {
             final day = int.parse(parts[0]);
             final month = int.parse(parts[1]);
             final year = int.parse(parts[2]);
-            return day >= 1 && day <= 31 && month >= 1 && month <= 12 && year > 1900;
+            return day >= 1 &&
+                day <= 31 &&
+                month >= 1 &&
+                month <= 12 &&
+                year > 1900;
           }
         }
-        
+
         // Try to parse as ISO format
         DateTime.parse(date);
         return true;

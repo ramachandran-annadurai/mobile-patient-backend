@@ -75,6 +75,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       role: widget.role,
     );
 
+    // Debug logging
+    print('🔍 OTP Verification Debug:');
+    print('  Success: $success');
+    print('  AuthProvider Error: ${authProvider.error}');
+    print('  IsLoggedIn: ${authProvider.isLoggedIn}');
+    print('  PatientId: ${authProvider.patientId}');
+
     setState(() {
       _isLoading = false;
     });
@@ -102,6 +109,43 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     }
   }
 
+  Future<void> _resendOtp() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final success = await authProvider.resendOtp(
+      email: widget.email,
+    );
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('OTP resent successfully! Please check your email.'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      
+      // Clear OTP fields
+      for (var controller in _otpControllers) {
+        controller.clear();
+      }
+      _focusNodes[0].requestFocus();
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.error ?? 'Failed to resend OTP'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -121,7 +165,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               const SizedBox(height: 20),
               
               // Icon and Title
-              Icon(
+              const Icon(
                 Icons.verified_user,
                 size: 70,
                 color: AppColors.primary,
@@ -211,15 +255,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
               // Resend OTP
               TextButton(
-                onPressed: _isLoading ? null : () {
-                  // TODO: Implement resend OTP
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Resend OTP feature coming soon!'),
-                    ),
-                  );
-                },
-                child: Text(
+                onPressed: _isLoading ? null : _resendOtp,
+                child: const Text(
                   AppStrings.resendOtp,
                   style: TextStyle(color: AppColors.primary),
                 ),

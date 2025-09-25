@@ -1,0 +1,19 @@
+{
+  "23afea27-509a-48fe-9b94-0336761e82c1": {
+    "id": "23afea27-509a-48fe-9b94-0336761e82c1",
+    "name": "Default n8n Webhook",
+    "url": "",
+    "enabled": false,
+    "method": "POST",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "timeout": 30,
+    "retry_attempts": 3,
+    "retry_delay": 1,
+    "payload_template": {},
+    "filters": {},
+    "created_at": "2025-08-26 10:08:23.302734",
+    "updated_at": "2025-08-26 10:08:23.303483"
+  }
+}

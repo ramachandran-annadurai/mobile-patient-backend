@@ -15,10 +15,10 @@ class PatientFoodTrackingScreen extends StatefulWidget {
   final String userRole; // Add this
 
   const PatientFoodTrackingScreen({
-    Key? key,
+    super.key,
     required this.date,
     this.userRole = 'patient', // Default value
-  }) : super(key: key);
+  });
 
   // Factory constructor to handle string dates from navigation
   factory PatientFoodTrackingScreen.fromStringDate({
@@ -34,33 +34,34 @@ class PatientFoodTrackingScreen extends StatefulWidget {
   }
 
   @override
-  State<PatientFoodTrackingScreen> createState() => _PatientFoodTrackingScreenState();
+  State<PatientFoodTrackingScreen> createState() =>
+      _PatientFoodTrackingScreenState();
 }
 
 class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
   final TextEditingController _foodController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
-  
+
   // Voice recording related variables
   final EnhancedVoiceService _voiceService = EnhancedVoiceService();
   bool _isRecording = false;
-  bool _isTranscribing = false;
+  final bool _isTranscribing = false;
   String _transcribedText = '';
-  
+
   // Analysis related variables
   bool _isAnalyzing = false;
   Map<String, dynamic>? _nutritionAnalysis;
   String _userId = '';
-  
+
   bool _isSaving = false;
   bool _isLoadingUserData = true;
-  
+
   String _selectedMealType = 'breakfast';
   int _pregnancyWeek = 1;
   String _username = '';
   String _email = '';
   String _userRole = 'patient';
-  
+
   Map<String, dynamic>? _userProfile;
   // Map<String, dynamic>? _dailyCalorieSummary; // Removed as per edit hint
 
@@ -74,19 +75,19 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     // Set default values
     _selectedMealType = 'breakfast';
     _pregnancyWeek = 1;
     _userRole = 'patient';
-    
+
     // Debug: Log the date parameter
     print('🔍 Food Tracking Screen - Date parameter: ${widget.date}');
     print('🔍 Food Tracking Screen - Date type: ${widget.date.runtimeType}');
-    
+
     // Fetch user data from backend
     _fetchUserProfile();
-    
+
     print('🚀 Food Tracking Screen initialized');
   }
 
@@ -107,7 +108,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
       setState(() {
         _isRecording = true;
       });
-      
+
       final success = await _voiceService.startRecording();
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -146,44 +147,49 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
     setState(() {
       _isAnalyzing = true; // Reuse this for connection testing
     });
-    
+
     try {
       print('🔍 Testing backend connectivity...');
-      
+
       // Test multiple endpoints
       final healthResponse = await http.get(
         Uri.parse('${ApiConfig.nutritionBaseUrl}/health'),
         headers: {'Content-Type': 'application/json'},
       ).timeout(const Duration(seconds: 15));
-      
+
       print('📡 Health check response: ${healthResponse.statusCode}');
-      
+
       if (healthResponse.statusCode == 200) {
         final data = json.decode(healthResponse.body);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Backend is accessible! Status: ${data['message']}'),
+            content:
+                Text('✅ Backend is accessible! Status: ${data['message']}'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 4),
           ),
         );
-        
+
         // Test transcription endpoint
         try {
-          final transcribeResponse = await http.post(
-            Uri.parse('${ApiConfig.nutritionBaseUrl}/transcribe'),
-            headers: {'Content-Type': 'application/json'},
-            body: json.encode({
-              'audio': 'dGVzdA==', // Test audio data
-              'language': 'en',
-              'method': 'whisper'
-            }),
-          ).timeout(const Duration(seconds: 10));
-          
-          if (transcribeResponse.statusCode == 200 || transcribeResponse.statusCode == 500) {
+          final transcribeResponse = await http
+              .post(
+                Uri.parse('${ApiConfig.nutritionBaseUrl}/transcribe'),
+                headers: {'Content-Type': 'application/json'},
+                body: json.encode({
+                  'audio': 'dGVzdA==', // Test audio data
+                  'language': 'en',
+                  'method': 'whisper'
+                }),
+              )
+              .timeout(const Duration(seconds: 10));
+
+          if (transcribeResponse.statusCode == 200 ||
+              transcribeResponse.statusCode == 500) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('✅ Transcription endpoint working! (Status: ${transcribeResponse.statusCode})'),
+                content: Text(
+                    '✅ Transcription endpoint working! (Status: ${transcribeResponse.statusCode})'),
                 backgroundColor: Colors.green,
                 duration: const Duration(seconds: 3),
               ),
@@ -192,11 +198,11 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
         } catch (e) {
           print('⚠️ Transcription test failed: $e');
         }
-        
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('⚠️ Backend health check failed: ${healthResponse.statusCode}'),
+            content: Text(
+                '⚠️ Backend health check failed: ${healthResponse.statusCode}'),
             backgroundColor: Colors.orange,
             duration: const Duration(seconds: 4),
           ),
@@ -206,7 +212,8 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
       print('❌ Backend connectivity test failed: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('❌ Backend connectivity failed: $e\n\nPlease ensure the nutrition backend is running on port 8001.'),
+          content: Text(
+              '❌ Backend connectivity failed: $e\n\nPlease ensure the nutrition backend is running on port 8001.'),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 6),
         ),
@@ -223,17 +230,18 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
       setState(() {
         _isRecording = false;
       });
-      
+
       final success = await _voiceService.stopRecording();
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('⏹️ Recording stopped. Processing with translation...'),
+            content:
+                Text('⏹️ Recording stopped. Processing with translation...'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 2),
           ),
         );
-        
+
         // Use the new translation method
         await _transcribeAudioWithTranslation();
       } else {
@@ -260,7 +268,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
       setState(() {
         _isAnalyzing = true;
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('🔤 Transcribing audio and translating if needed...'),
@@ -268,21 +276,21 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
           duration: Duration(seconds: 3),
         ),
       );
-      
+
       final transcription = await _voiceService.transcribeAudio();
-      
+
       if (transcription != null) {
         setState(() {
           _transcribedText = transcription;
           // Automatically populate the food input field with transcribed text
           _foodController.text = transcription;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('✅ Transcription complete: $transcription'),
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 4),
+            duration: const Duration(seconds: 4),
           ),
         );
       } else {
@@ -322,47 +330,49 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
       });
 
       print('🔍 Fetching current login user profile using AuthProvider...');
-      
+
       // Get current login user info from AuthProvider (same as kick counter)
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userInfo = await authProvider.getCurrentUserInfo();
-      
+
       final String? patientId = userInfo['userId'];
       if (patientId == null) {
-        throw Exception('Patient ID not found. Please ensure you are logged in.');
+        throw Exception(
+            'Patient ID not found. Please ensure you are logged in.');
       }
 
       print('🔍 Found patient ID: $patientId');
-      
+
       // Use the patient ID to fetch profile (same pattern as kick counter)
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/get-patient-profile/${patientId}'),
+        Uri.parse('${ApiConfig.baseUrl}/get-patient-profile/$patientId'),
         headers: {'Content-Type': 'application/json'},
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         print('✅ Current user profile response: ${json.encode(data)}');
-        
+
         if (data['success'] == true) {
           final profile = data['profile'];
-          
+
           setState(() {
             _userId = profile['patient_id'] ?? '';
             _username = profile['username'] ?? '';
             _email = profile['email'] ?? '';
             _pregnancyWeek = profile['pregnancy_week'] ?? 1;
-            
+
             // Get additional profile details
-            _expectedDeliveryDate = profile['expected_delivery_date'] ?? 'Not specified';
+            _expectedDeliveryDate =
+                profile['expected_delivery_date'] ?? 'Not specified';
             _lastPeriodDate = profile['last_period_date'] ?? 'Not specified';
             _bloodType = profile['blood_type'] ?? 'Not specified';
             _height = profile['height'] ?? 'Not specified';
             _weight = profile['weight'] ?? 'Not specified';
-            
+
             _isLoadingUserData = false;
           });
-          
+
           print('✅ Profile data fetched successfully:');
           print('🆔 User ID: $_userId');
           print('👤 Username: $_username');
@@ -373,13 +383,14 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
           print(' Blood Type: $_bloodType');
           print(' Height: $_height');
           print(' Weight: $_weight');
-          
+
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Profile loaded: ${_username} - Week $_pregnancyWeek'),
+              content:
+                  Text('Profile loaded: $_username - Week $_pregnancyWeek'),
               backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
+              duration: const Duration(seconds: 2),
             ),
           );
         } else {
@@ -393,12 +404,12 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
       setState(() {
         _isLoadingUserData = false;
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to get current user: $e'),
           backgroundColor: Colors.red,
-          duration: Duration(seconds: 3),
+          duration: const Duration(seconds: 3),
         ),
       );
     }
@@ -408,12 +419,12 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
   Future<Map<String, dynamic>?> _getCurrentLoginUser() async {
     try {
       print('🔍 Getting current login user from AuthProvider...');
-      
+
       // Use the same method as kick counter screen
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userInfo = await authProvider.getCurrentUserInfo();
-      
-      if (userInfo != null && userInfo['userId'] != null) {
+
+      if (userInfo['userId'] != null) {
         print('✅ Got current user from AuthProvider: ${userInfo['userId']}');
         return {
           'email': userInfo['email'] ?? '',
@@ -424,7 +435,6 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
         print('❌ No current user found in AuthProvider');
         return null;
       }
-      
     } catch (e) {
       print('❌ Error getting current login user from AuthProvider: $e');
       return null;
@@ -439,7 +449,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
       });
 
       print('🔍 Updating pregnancy info for user: $_userId');
-      
+
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/nutrition/update-pregnancy-info'),
         headers: {'Content-Type': 'application/json'},
@@ -453,13 +463,13 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         print('✅ Pregnancy info update response: ${json.encode(data)}');
-        
+
         if (data['success'] == true) {
           // Refresh user profile
           await _fetchUserProfile();
-          
+
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+            const SnackBar(
               content: Text('Pregnancy information updated successfully!'),
               backgroundColor: Colors.green,
               duration: Duration(seconds: 3),
@@ -468,9 +478,10 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to update pregnancy info: ${data['message']}'),
+              content:
+                  Text('Failed to update pregnancy info: ${data['message']}'),
               backgroundColor: Colors.red,
-              duration: Duration(seconds: 3),
+              duration: const Duration(seconds: 3),
             ),
           );
         }
@@ -483,7 +494,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
         SnackBar(
           content: Text('Error updating pregnancy information: $e'),
           backgroundColor: Colors.red,
-          duration: Duration(seconds: 3),
+          duration: const Duration(seconds: 3),
         ),
       );
     } finally {
@@ -496,7 +507,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
   Future<void> _analyzeNutrition() async {
     try {
       print('🔍 Starting nutrition analysis...');
-      
+
       // Get food input with null safety
       final foodInput = _foodController.text.trim();
       if (foodInput.isEmpty) {
@@ -518,27 +529,31 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
       // print('📅 Pregnancy week: $_pregnancyWeek'); // Removed as per edit hint
 
       // Call the Flask nutrition analysis API
-      final response = await http.post(
-        Uri.parse('${ApiConfig.nutritionBaseUrl}/nutrition/analyze-nutrition'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'food_input': foodInput,
-          'user_id': _userId,  // Send user_id for auto-fetching pregnancy week
-          'notes': _notesController.text.trim(),
-        }),
-      ).timeout(const Duration(seconds: 60));
+      final response = await http
+          .post(
+            Uri.parse(
+                '${ApiConfig.nutritionBaseUrl}/nutrition/analyze-nutrition'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({
+              'food_input': foodInput,
+              'user_id':
+                  _userId, // Send user_id for auto-fetching pregnancy week
+              'notes': _notesController.text.trim(),
+            }),
+          )
+          .timeout(const Duration(seconds: 60));
 
       print('📡 API Response Status: ${response.statusCode}');
       print('📡 API Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        
+
         if (data['success'] == true) {
           setState(() {
             _nutritionAnalysis = data;
           });
-          
+
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -546,13 +561,15 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
               backgroundColor: Colors.green,
             ),
           );
-          
+
           print('✅ Nutrition analysis successful');
         } else {
-          throw Exception(data['error'] ?? 'Unknown error in nutrition analysis');
+          throw Exception(
+              data['error'] ?? 'Unknown error in nutrition analysis');
         }
       } else {
-        throw Exception('API returned status ${response.statusCode}: ${response.body}');
+        throw Exception(
+            'API returned status ${response.statusCode}: ${response.body}');
       }
     } catch (e) {
       print('❌ Error in nutrition analysis: $e');
@@ -576,7 +593,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
   Future<void> _analyzeFoodWithGPT4() async {
     if (_foodController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Please enter food details first'),
           backgroundColor: Colors.orange,
           duration: Duration(seconds: 3),
@@ -603,15 +620,16 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
 
       if (response['success'] == true) {
         final analysis = response['analysis'];
-        
+
         // Show comprehensive GPT-4 analysis
         _showGPT4AnalysisDialog(analysis);
-        
+
         // Store the analysis result
-        _nutritionAnalysis = analysis; // Update _nutritionAnalysis to show in UI
-        
+        _nutritionAnalysis =
+            analysis; // Update _nutritionAnalysis to show in UI
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('GPT-4 analysis completed successfully!'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 3),
@@ -622,7 +640,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
           SnackBar(
             content: Text('Analysis failed: ${response['message']}'),
             backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -630,12 +648,12 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
       setState(() {
         _isAnalyzing = false;
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error during analysis: $e'),
           backgroundColor: Colors.red,
-          duration: Duration(seconds: 3),
+          duration: const Duration(seconds: 3),
         ),
       );
     }
@@ -646,7 +664,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
+        title: const Row(
           children: [
             Icon(Icons.psychology, color: Colors.purple),
             SizedBox(width: 8),
@@ -671,22 +689,23 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                   'Fiber: ${analysis['nutritional_breakdown']?['fiber_grams'] ?? 'N/A'}g',
                 ],
               ),
-              
-              SizedBox(height: 16),
-              
+
+              const SizedBox(height: 16),
+
               // Pregnancy Benefits
               _buildAnalysisSection(
                 'Pregnancy Benefits',
                 Icons.favorite,
                 Colors.pink,
                 [
-                  analysis['pregnancy_benefits']?['week_specific_advice'] ?? 'N/A',
+                  analysis['pregnancy_benefits']?['week_specific_advice'] ??
+                      'N/A',
                   'Nutrients for fetal development: ${(analysis['pregnancy_benefits']?['nutrients_for_fetal_development'] as List?)?.join(', ') ?? 'N/A'}',
                 ],
               ),
-              
-              SizedBox(height: 16),
-              
+
+              const SizedBox(height: 16),
+
               // Safety Considerations
               _buildAnalysisSection(
                 'Safety & Cooking',
@@ -697,9 +716,9 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                   'Cooking: ${(analysis['safety_considerations']?['cooking_recommendations'] as List?)?.join(', ') ?? 'N/A'}',
                 ],
               ),
-              
-              SizedBox(height: 16),
-              
+
+              const SizedBox(height: 16),
+
               // Smart Recommendations
               _buildAnalysisSection(
                 'Smart Recommendations',
@@ -716,18 +735,18 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Close'),
+            child: const Text('Close'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               _saveFoodEntry();
             },
-            child: Text('Save Analysis'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
               foregroundColor: Colors.white,
             ),
+            child: Text('Save Analysis'),
           ),
         ],
       ),
@@ -735,9 +754,10 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
   }
 
   // Build analysis section widget
-  Widget _buildAnalysisSection(String title, IconData icon, Color color, List<String> items) {
+  Widget _buildAnalysisSection(
+      String title, IconData icon, Color color, List<String> items) {
     return Container(
-      padding: EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
@@ -749,7 +769,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
           Row(
             children: [
               Icon(icon, color: color, size: 20),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
                 title,
                 style: TextStyle(
@@ -760,14 +780,14 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
               ),
             ],
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           ...items.map((item) => Padding(
-            padding: EdgeInsets.only(left: 28, bottom: 4),
-            child: Text(
-              '• $item',
-              style: TextStyle(fontSize: 14),
-            ),
-          )),
+                padding: const EdgeInsets.only(left: 28, bottom: 4),
+                child: Text(
+                  '• $item',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              )),
         ],
       ),
     );
@@ -776,7 +796,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
   Future<void> _saveFoodEntry() async {
     try {
       print('💾 Starting to save food entry for current user...');
-      
+
       final foodDetails = _foodController.text.trim();
       if (foodDetails.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -791,21 +811,23 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
       // Get current user info from AuthProvider (same as kick counter)
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userInfo = await authProvider.getCurrentUserInfo();
-      
+
       final String? patientId = userInfo['userId'];
       if (patientId == null) {
-        throw Exception('Patient ID not found. Please ensure you are logged in.');
+        throw Exception(
+            'Patient ID not found. Please ensure you are logged in.');
       }
 
       // Ensure we have current user data
       if (_userId.isEmpty || _email.isEmpty) {
         print('❌ No current user data available, fetching profile first...');
         await _fetchUserProfile();
-        
+
         if (_userId.isEmpty || _email.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('User not identified. Please ensure you are logged in.'),
+              content:
+                  Text('User not identified. Please ensure you are logged in.'),
               backgroundColor: Colors.red,
             ),
           );
@@ -836,7 +858,8 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
         'pregnancy_week': _pregnancyWeek,
         'notes': _notesController.text.trim(),
         'transcribed_text': _transcribedText,
-        'nutritional_breakdown': _nutritionAnalysis?['nutritional_breakdown'] ?? {},
+        'nutritional_breakdown':
+            _nutritionAnalysis?['nutritional_breakdown'] ?? {},
         'gpt4_analysis': _nutritionAnalysis, // Include full GPT-4 analysis
         'timestamp': DateTime.now().toIso8601String(),
       };
@@ -844,39 +867,43 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
       print('📤 Sending food data for current user to backend: $foodEntryData');
 
       // Save to backend with current user's ID
-      final response = await http.post(
-        Uri.parse('${ApiConfig.nutritionBaseUrl}/nutrition/save-food-entry'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(foodEntryData),
-      ).timeout(const Duration(seconds: 60));
+      final response = await http
+          .post(
+            Uri.parse(
+                '${ApiConfig.nutritionBaseUrl}/nutrition/save-food-entry'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(foodEntryData),
+          )
+          .timeout(const Duration(seconds: 60));
 
       print('📡 Save API Response Status: ${response.statusCode}');
       print('📡 Save API Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        
+
         if (data['success'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('✅ Food saved for ${_username}!'),
+              content: Text('✅ Food saved for $_username!'),
               backgroundColor: Colors.green,
             ),
           );
-          
+
           // Clear form
           _foodController.clear();
           _notesController.clear();
           setState(() {
             _nutritionAnalysis = null;
           });
-          
+
           print('✅ Food entry saved successfully for current user: $_username');
         } else {
           throw Exception(data['error'] ?? 'Unknown error saving food entry');
         }
       } else {
-        throw Exception('Save API returned status ${response.statusCode}: ${response.body}');
+        throw Exception(
+            'Save API returned status ${response.statusCode}: ${response.body}');
       }
     } catch (e) {
       print('❌ Error saving food entry for current user: $e');
@@ -900,7 +927,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
   //     });
 
   //     print('🔍 Updating pregnancy info for patient ID: $_userId');
-      
+
   //     final response = await http.post(
   //       Uri.parse('${ApiConfig.nutritionBaseUrl}/nutrition/update-pregnancy-info'),
   //       headers: {'Content-Type': 'application/json'},
@@ -914,11 +941,11 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
   //     if (response.statusCode == 200) {
   //       final data = json.decode(response.body);
   //       print('✅ Pregnancy info update response: ${json.encode(data)}');
-        
+
   //       if (data['success'] == true) {
   //         // Refresh pregnancy info
   //         await _fetchUserProfile();
-          
+
   //         ScaffoldMessenger.of(context).showSnackBar(
   //           SnackBar(
   //             content: Text('Pregnancy information updated successfully!'),
@@ -938,7 +965,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
   //     } else {
   //       print('❌ HTTP Error: ${response.statusCode}');
   //       print('❌ Response body: ${response.body}');
-        
+
   //       ScaffoldMessenger.of(context).showSnackBar(
   //         SnackBar(
   //           content: Text('Failed to update pregnancy information'),
@@ -971,7 +998,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
   //     });
 
   //     print('🔍 Fetching daily calorie summary for patient ID: $_userId');
-      
+
   //     final response = await http.get(
   //       Uri.parse('${ApiConfig.nutritionBaseUrl}/nutrition/daily-calorie-summary/$_userId'),
   //       headers: {'Content-Type': 'application/json'},
@@ -980,12 +1007,12 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
   //     if (response.statusCode == 200) {
   //       final data = json.decode(response.body);
   //       print('✅ Daily calorie summary response: ${json.encode(data)}');
-        
+
   //       if (data['success'] == true) {
   //         setState(() {
   //           _dailyCalorieSummary = data;
   //         });
-          
+
   //         ScaffoldMessenger.of(context).showSnackBar(
   //           SnackBar(
   //             content: Text('Daily calorie summary fetched successfully!'),
@@ -1021,14 +1048,14 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Row(
+          title: const Row(
             children: [
               Icon(Icons.person, color: Colors.purple),
               SizedBox(width: 8),
               Text('Current User Profile'),
             ],
           ),
-          content: Container(
+          content: SizedBox(
             width: double.maxFinite,
             child: SingleChildScrollView(
               child: Column(
@@ -1039,32 +1066,44 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                   _buildProfileSection(
                     '👤 User Information',
                     [
-                      _buildProfileInfoRow('📧 Email ID', _email.isNotEmpty ? _email : 'Not available'),
-                      _buildProfileInfoRow('🆔 Patient ID', _userId.isNotEmpty ? _userId : 'Not available'),
-                      _buildProfileInfoRow('👤 Username', _username.isNotEmpty ? _username : 'Not available'),
+                      _buildProfileInfoRow('📧 Email ID',
+                          _email.isNotEmpty ? _email : 'Not available'),
+                      _buildProfileInfoRow('🆔 Patient ID',
+                          _userId.isNotEmpty ? _userId : 'Not available'),
+                      _buildProfileInfoRow('👤 Username',
+                          _username.isNotEmpty ? _username : 'Not available'),
                     ],
                     Colors.blue[700]!,
                   ),
-                  
-                  SizedBox(height: 16),
-                  
+
+                  const SizedBox(height: 16),
+
                   // Pregnancy Information Section
                   _buildProfileSection(
                     '🤱 Pregnancy Information',
                     [
-                      _buildProfileInfoRow('🤱 Pregnancy Week', 'Week $_pregnancyWeek'),
-                      _buildProfileInfoRow('📅 Expected Delivery', _expectedDeliveryDate.isNotEmpty ? _expectedDeliveryDate : 'Not specified'),
-                      _buildProfileInfoRow('📅 Last Period Date', _lastPeriodDate.isNotEmpty ? _lastPeriodDate : 'Not specified'),
+                      _buildProfileInfoRow(
+                          '🤱 Pregnancy Week', 'Week $_pregnancyWeek'),
+                      _buildProfileInfoRow(
+                          '📅 Expected Delivery',
+                          _expectedDeliveryDate.isNotEmpty
+                              ? _expectedDeliveryDate
+                              : 'Not specified'),
+                      _buildProfileInfoRow(
+                          '📅 Last Period Date',
+                          _lastPeriodDate.isNotEmpty
+                              ? _lastPeriodDate
+                              : 'Not specified'),
                     ],
                     Colors.pink[700]!,
                   ),
-                  
-                  SizedBox(height: 16),
-                  
+
+                  const SizedBox(height: 16),
+
                   // Status Section
                   Container(
                     width: double.infinity,
-                    padding: EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.green[50],
                       borderRadius: BorderRadius.circular(8),
@@ -1072,8 +1111,9 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.check_circle, color: Colors.green[600], size: 20),
-                        SizedBox(width: 8),
+                        Icon(Icons.check_circle,
+                            color: Colors.green[600], size: 20),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'Profile data loaded from backend',
@@ -1086,16 +1126,19 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                       ],
                     ),
                   ),
-                  
-                  SizedBox(height: 16),
-                  
+
+                  const SizedBox(height: 16),
+
                   // Additional Information Section
                   _buildProfileSection(
                     ' Additional Details',
                     [
-                      _buildProfileInfoRow('🩸 Blood Type', _bloodType.isNotEmpty ? _bloodType : 'Not specified'),
-                      _buildProfileInfoRow('📏 Height', _height.isNotEmpty ? '$_height cm' : 'Not specified'),
-                      _buildProfileInfoRow('⚖️ Weight', _weight.isNotEmpty ? '$_weight kg' : 'Not specified'),
+                      _buildProfileInfoRow('🩸 Blood Type',
+                          _bloodType.isNotEmpty ? _bloodType : 'Not specified'),
+                      _buildProfileInfoRow('📏 Height',
+                          _height.isNotEmpty ? '$_height cm' : 'Not specified'),
+                      _buildProfileInfoRow('⚖️ Weight',
+                          _weight.isNotEmpty ? '$_weight kg' : 'Not specified'),
                     ],
                     Colors.teal[700]!,
                   ),
@@ -1108,7 +1151,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Close'),
+              child: const Text('Close'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -1119,7 +1162,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                 backgroundColor: Colors.purple,
                 foregroundColor: Colors.white,
               ),
-              child: Text('Refresh'),
+              child: const Text('Refresh'),
             ),
           ],
         );
@@ -1128,10 +1171,11 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
   }
 
   // Helper method to build profile sections with headers
-  Widget _buildProfileSection(String title, List<Widget> children, Color color) {
+  Widget _buildProfileSection(
+      String title, List<Widget> children, Color color) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
@@ -1148,7 +1192,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
               color: color, // Use the color directly instead of color[700]
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           ...children,
         ],
       ),
@@ -1173,12 +1217,12 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
               ),
             ),
           ),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Expanded(
             flex: 3,
             child: Text(
               value,
-              style: TextStyle(
+              style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
                 color: Colors.black87,
@@ -1201,7 +1245,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
           // Add profile button
           IconButton(
             onPressed: _showCurrentUserProfile,
-            icon: Icon(Icons.person),
+            icon: const Icon(Icons.person),
             tooltip: 'View Current User Profile',
           ),
         ],
@@ -1236,11 +1280,13 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                               const SizedBox(height: 8),
                               // Pregnancy Week Display with Loading
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
                                 decoration: BoxDecoration(
                                   color: Colors.yellow[100],
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: Colors.yellow[300]!),
+                                  border:
+                                      Border.all(color: Colors.yellow[300]!),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -1251,14 +1297,19 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                                         height: 16,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.pink[600]!),
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                  Colors.pink[600]!),
                                         ),
                                       )
                                     else
-                                      Icon(Icons.pregnant_woman, size: 16, color: Colors.pink[600]),
+                                      Icon(Icons.pregnant_woman,
+                                          size: 16, color: Colors.pink[600]),
                                     const SizedBox(width: 4),
                                     Text(
-                                      _isLoadingUserData ? 'Loading...' : 'Week $_pregnancyWeek',
+                                      _isLoadingUserData
+                                          ? 'Loading...'
+                                          : 'Week $_pregnancyWeek',
                                       style: TextStyle(
                                         color: Colors.yellow[800],
                                         fontWeight: FontWeight.bold,
@@ -1269,31 +1320,39 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              
+
                               // Pregnancy Info Update Buttons
                               Row(
                                 children: [
                                   ElevatedButton.icon(
-                                    onPressed: _isLoadingUserData ? null : _updatePregnancyInfo,
-                                    icon: Icon(Icons.update, size: 16),
-                                    label: Text('Update', style: TextStyle(fontSize: 12)),
+                                    onPressed: _isLoadingUserData
+                                        ? null
+                                        : _updatePregnancyInfo,
+                                    icon: const Icon(Icons.update, size: 16),
+                                    label: const Text('Update',
+                                        style: TextStyle(fontSize: 12)),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.pink[100],
                                       foregroundColor: Colors.pink[800],
-                                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                      minimumSize: Size(0, 32),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 6),
+                                      minimumSize: const Size(0, 32),
                                     ),
                                   ),
                                   const SizedBox(width: 8),
                                   ElevatedButton.icon(
-                                    onPressed: _isLoadingUserData ? null : _fetchUserProfile,
-                                    icon: Icon(Icons.refresh, size: 16),
-                                    label: Text('Refresh', style: TextStyle(fontSize: 12)),
+                                    onPressed: _isLoadingUserData
+                                        ? null
+                                        : _fetchUserProfile,
+                                    icon: const Icon(Icons.refresh, size: 16),
+                                    label: const Text('Refresh',
+                                        style: TextStyle(fontSize: 12)),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.blue[100],
                                       foregroundColor: Colors.blue[800],
-                                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                      minimumSize: Size(0, 32),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 6),
+                                      minimumSize: const Size(0, 32),
                                     ),
                                   ),
                                 ],
@@ -1344,7 +1403,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    
+
                     // Voice Recording Section
                     Container(
                       padding: const EdgeInsets.all(16),
@@ -1358,7 +1417,8 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.mic, color: Colors.blue.shade700, size: 20),
+                              Icon(Icons.mic,
+                                  color: Colors.blue.shade700, size: 20),
                               const SizedBox(width: 8),
                               Text(
                                 'Voice Recording',
@@ -1392,15 +1452,24 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                             children: [
                               Expanded(
                                 child: ElevatedButton.icon(
-                                  onPressed: _isRecording ? _stopVoiceRecording : _startVoiceRecording,
-                                  icon: _isRecording 
-                                    ? Icon(Icons.stop, color: Colors.white)
-                                    : Icon(Icons.mic, color: Colors.white),
-                                  label: Text(_isRecording ? 'Stop Recording' : 'Start Recording'),
+                                  onPressed: _isRecording
+                                      ? _stopVoiceRecording
+                                      : _startVoiceRecording,
+                                  icon: _isRecording
+                                      ? const Icon(Icons.stop,
+                                          color: Colors.white)
+                                      : const Icon(Icons.mic,
+                                          color: Colors.white),
+                                  label: Text(_isRecording
+                                      ? 'Stop Recording'
+                                      : 'Start Recording'),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: _isRecording ? Colors.red : Colors.blue.shade600,
+                                    backgroundColor: _isRecording
+                                        ? Colors.red
+                                        : Colors.blue.shade600,
                                     foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
                                   ),
                                 ),
                               ),
@@ -1415,7 +1484,8 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                                   height: 16,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade600),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.blue.shade600),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -1440,7 +1510,8 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.check_circle, color: Colors.green.shade600, size: 16),
+                                  Icon(Icons.check_circle,
+                                      color: Colors.green.shade600, size: 16),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
@@ -1458,7 +1529,8 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                Icon(Icons.arrow_downward, color: Colors.blue.shade600, size: 16),
+                                Icon(Icons.arrow_downward,
+                                    color: Colors.blue.shade600, size: 16),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Automatically copied to food input field above',
@@ -1490,7 +1562,8 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Connection Status',
@@ -1502,7 +1575,9 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                                       ),
                                       Text(
                                         'Backend: ${ApiConfig.nutritionBaseUrl}',
-                                        style: TextStyle(fontSize: 10, color: Colors.blue.shade600),
+                                        style: TextStyle(
+                                            fontSize: 10,
+                                            color: Colors.blue.shade600),
                                       ),
                                     ],
                                   ),
@@ -1514,8 +1589,8 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                           // Debug connectivity button
                           ElevatedButton.icon(
                             onPressed: _testBackendConnectivity,
-                            icon: Icon(Icons.wifi, color: Colors.white),
-                            label: Text('Test Backend Connection'),
+                            icon: const Icon(Icons.wifi, color: Colors.white),
+                            label: const Text('Test Backend Connection'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green.shade600,
                               foregroundColor: Colors.white,
@@ -1544,15 +1619,18 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                                 const SizedBox(height: 4),
                                 Text(
                                   'Backend: ${ApiConfig.nutritionBaseUrl}',
-                                  style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                                  style: TextStyle(
+                                      fontSize: 10, color: Colors.grey[600]),
                                 ),
                                 Text(
                                   'Endpoint: ${ApiConfig.transcribeEndpoint}',
-                                  style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                                  style: TextStyle(
+                                      fontSize: 10, color: Colors.grey[600]),
                                 ),
                                 Text(
                                   'Full URL: ${ApiConfig.nutritionBaseUrl}${ApiConfig.transcribeEndpoint}',
-                                  style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                                  style: TextStyle(
+                                      fontSize: 10, color: Colors.grey[600]),
                                 ),
                               ],
                             ),
@@ -1560,7 +1638,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                         ],
                       ),
                     ),
-                    
+
                     // Tamil to English Translation Info
                     const SizedBox(height: 16),
                     Container(
@@ -1575,7 +1653,8 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.translate, color: Colors.green.shade600, size: 20),
+                              Icon(Icons.translate,
+                                  color: Colors.green.shade600, size: 20),
                               const SizedBox(width: 8),
                               Text(
                                 '🌐 Tamil to English Translation',
@@ -1607,7 +1686,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 16),
                     TextField(
                       controller: _foodController,
@@ -1640,69 +1719,78 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                         ),
                       ),
                     ),
-                     const SizedBox(height: 16),
-                     Row(
-                       children: [
-                         Expanded(
-                           child: ElevatedButton.icon(
-                             onPressed: _analyzeFoodWithGPT4,
-                             icon: Icon(Icons.psychology, color: Colors.white),
-                             label: Text('Analyze with AI'),
-                             style: ElevatedButton.styleFrom(
-                               backgroundColor: Colors.green[600],
-                               foregroundColor: Colors.white,
-                               padding: const EdgeInsets.symmetric(vertical: 12),
-                               shape: RoundedRectangleBorder(
-                                 borderRadius: BorderRadius.circular(8),
-                               ),
-                             ),
-                           ),
-                         ),
-                       ],
-                     ),
-                     const SizedBox(height: 12),
-                     // Information about detailed food entry storage
-                     Container(
-                       padding: const EdgeInsets.all(16),
-                       decoration: BoxDecoration(
-                         color: Colors.blue[50],
-                         borderRadius: BorderRadius.circular(8),
-                         border: Border.all(color: Colors.blue[200]!),
-                       ),
-                       child: Column(
-                         crossAxisAlignment: CrossAxisAlignment.start,
-                         children: [
-                           Row(
-                             children: [
-                               Icon(Icons.info_outline, color: Colors.blue[600], size: 20),
-                               const SizedBox(width: 8),
-                               Text(
-                                 'Detailed Food Entry Storage',
-                                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                   color: Colors.blue[800],
-                                   fontWeight: FontWeight.w600,
-                                 ),
-                               ),
-                             ],
-                           ),
-                           const SizedBox(height: 8),
-                           Text(
-                             'Detailed food entries with allergies, medical conditions, and dietary preferences are automatically stored in your patient profile in the Patient_test database.',
-                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                               color: Colors.blue[700],
-                             ),
-                           ),
-                           const SizedBox(height: 4),
-                           Text(
-                             'Storage Location: Patient_test → food_data array → entry_type: "detailed"',
-                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                               color: Colors.blue[600],
-                               fontStyle: FontStyle.italic,
-                             ),
-                           ),
-                         ],
-                       ),
-                     ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _analyzeFoodWithGPT4,
+                            icon: const Icon(Icons.psychology,
+                                color: Colors.white),
+                            label: const Text('Analyze with AI'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green[600],
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    // Information about detailed food entry storage
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue[200]!),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.info_outline,
+                                  color: Colors.blue[600], size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Detailed Food Entry Storage',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                      color: Colors.blue[800],
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Detailed food entries with allergies, medical conditions, and dietary preferences are automatically stored in your patient profile in the Patient_test database.',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Colors.blue[700],
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Storage Location: Patient_test → food_data array → entry_type: "detailed"',
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Colors.blue[600],
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                          ),
+                        ],
+                      ),
+                    ),
                     if (_isAnalyzing) ...[
                       const SizedBox(height: 16),
                       Center(
@@ -1739,19 +1827,23 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                         children: [
                           SizedBox(
                             width: MediaQuery.of(context).size.width * 0.4,
-                            child: _buildMealTypeButton('breakfast', 'Breakfast', Icons.wb_sunny),
+                            child: _buildMealTypeButton(
+                                'breakfast', 'Breakfast', Icons.wb_sunny),
                           ),
                           SizedBox(
                             width: MediaQuery.of(context).size.width * 0.4,
-                            child: _buildMealTypeButton('lunch', 'Lunch', Icons.restaurant),
+                            child: _buildMealTypeButton(
+                                'lunch', 'Lunch', Icons.restaurant),
                           ),
                           SizedBox(
                             width: MediaQuery.of(context).size.width * 0.4,
-                            child: _buildMealTypeButton('dinner', 'Dinner', Icons.nights_stay),
+                            child: _buildMealTypeButton(
+                                'dinner', 'Dinner', Icons.nights_stay),
                           ),
                           SizedBox(
                             width: MediaQuery.of(context).size.width * 0.4,
-                            child: _buildMealTypeButton('snack', 'Snack', Icons.coffee),
+                            child: _buildMealTypeButton(
+                                'snack', 'Snack', Icons.coffee),
                           ),
                         ],
                       ),
@@ -1772,26 +1864,32 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    Icon(Icons.pregnant_woman, color: Colors.pink[600], size: 20),
+                                    Icon(Icons.pregnant_woman,
+                                        color: Colors.pink[600], size: 20),
                                     const SizedBox(width: 8),
                                     Text(
                                       'Pregnancy Week',
-                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                        color: Colors.pink[800],
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            color: Colors.pink[800],
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                     ),
                                     const Spacer(),
                                     if (_isLoadingUserData)
                                       const SizedBox(
                                         width: 16,
                                         height: 16,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2),
                                       )
                                     else
                                       IconButton(
                                         onPressed: _fetchUserProfile,
-                                        icon: Icon(Icons.refresh, color: Colors.blue[600], size: 18),
+                                        icon: Icon(Icons.refresh,
+                                            color: Colors.blue[600], size: 18),
                                         tooltip: 'Refresh pregnancy info',
                                         padding: EdgeInsets.zero,
                                         constraints: const BoxConstraints(),
@@ -1843,7 +1941,8 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                             controller: _notesController,
                             decoration: const InputDecoration(
                               labelText: 'Additional Notes',
-                              hintText: 'e.g., Portion size, time, how you felt...',
+                              hintText:
+                                  'e.g., Portion size, time, how you felt...',
                               border: OutlineInputBorder(),
                             ),
                             maxLines: 2,
@@ -1867,7 +1966,9 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                                       width: 20,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                Colors.white),
                                       ),
                                     )
                                   : const Text('Save Food Entry'),
@@ -1906,394 +2007,517 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
                 ),
               ],
               // Displaying Enhanced Nutrition Analysis with Daily Calorie Tracking
-      if (_nutritionAnalysis != null) ...[
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.psychology, color: Colors.green[700], size: 24),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Enhanced Nutrition Analysis',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.green[700],
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                
-                // Daily Calorie Tracking Section
-                if (_nutritionAnalysis!['daily_calorie_tracking'] != null) ...[
-                  Text(
-                    '📊 Daily Calorie Tracking',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue[700],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[50],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.blue[200]!),
-                    ),
-                    child: Column(
-                      children: [
-                        _buildCalorieRow('Minimum Daily Calories', '${_nutritionAnalysis!['daily_calorie_tracking']['minimum_daily_calories'] ?? 0} kcal', Colors.blue),
-                        _buildCalorieRow('Recommended Daily Calories', '${_nutritionAnalysis!['daily_calorie_tracking']['recommended_daily_calories'] ?? 0} kcal', Colors.green),
-                        _buildCalorieRow('Calories Contributed', '${_nutritionAnalysis!['daily_calorie_tracking']['calories_contributed'] ?? 0} kcal', Colors.orange),
-                        _buildCalorieRow('Percentage of Daily Needs', '${_nutritionAnalysis!['daily_calorie_tracking']['percentage_of_daily_needs'] ?? 0}%', Colors.purple),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                
-                // Remaining Calories Section
-                if (_nutritionAnalysis!['remaining_calories'] != null) ...[
-                  Text(
-                    '🍽️ Remaining Calories Today',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.orange[700],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.orange[50],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.orange[200]!),
-                    ),
-                    child: Column(
-                      children: [
-                        _buildCalorieRow('Calories Remaining', '${_nutritionAnalysis!['remaining_calories']['calories_remaining'] ?? 0} kcal', Colors.orange),
-                        _buildCalorieRow('Meals Remaining', '${_nutritionAnalysis!['remaining_calories']['meals_remaining'] ?? 0} meals', Colors.red),
-                        _buildCalorieRow('Calories per Remaining Meal', '${_nutritionAnalysis!['remaining_calories']['calories_per_remaining_meal'] ?? 0} kcal', Colors.green),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                
-                // Calculated nutrition values from GPT
-                if (_nutritionAnalysis!['nutritional_breakdown'] != null) ...[
-                  Text(
-                    '🍎 Calculated Values from GPT-4:',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green[800],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  // Nutrition breakdown in a grid
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.green[50],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.green[200]!),
-                    ),
-                    child: Column(
-                      children: [
-                        _buildNutritionRow('Calories', '${_nutritionAnalysis!['nutritional_breakdown']['estimated_calories'] ?? 0} kcal', Colors.orange),
-                        _buildNutritionRow('Protein', '${_nutritionAnalysis!['nutritional_breakdown']['protein_grams'] ?? 0} g', Colors.red),
-                        _buildNutritionRow('Carbs', '${_nutritionAnalysis!['nutritional_breakdown']['carbohydrates_grams'] ?? 0} g', Colors.blue),
-                        _buildNutritionRow('Fat', '${_nutritionAnalysis!['nutritional_breakdown']['fat_grams'] ?? 0} g', Colors.purple),
-                        _buildNutritionRow('Fiber', '${_nutritionAnalysis!['nutritional_breakdown']['fiber_grams'] ?? 0} g', Colors.green),
-                      ],
-                    ),
-                  ),
-                ],
-                
-                const SizedBox(height: 16),
-                
-                // Smart Tips for Today Section
-                if (_nutritionAnalysis!['smart_tips_for_today'] != null) ...[
-                  Text(
-                    '💡 Smart Tips for Today',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.teal[700],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.teal[50],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.teal[200]!),
-                    ),
+              if (_nutritionAnalysis != null) ...[
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (_nutritionAnalysis!['smart_tips_for_today']['next_meal_suggestions'] != null) ...[
-                          _buildTipRow('🍽️ Next Meal Suggestions', _nutritionAnalysis!['smart_tips_for_today']['next_meal_suggestions']),
-                          const SizedBox(height: 8),
-                        ],
-                        if (_nutritionAnalysis!['smart_tips_for_today']['best_combinations'] != null) ...[
-                          _buildTipRow('🌟 Best Food Combinations', _nutritionAnalysis!['smart_tips_for_today']['best_combinations']),
-                          const SizedBox(height: 8),
-                        ],
-                        if (_nutritionAnalysis!['smart_tips_for_today']['hydration_tips'] != null) ...[
-                          _buildTipRow('💧 Hydration Tips', _nutritionAnalysis!['smart_tips_for_today']['hydration_tips']),
-                          const SizedBox(height: 8),
-                        ],
-                        if (_nutritionAnalysis!['smart_tips_for_today']['pregnancy_week_specific_advice'] != null) ...[
-                          _buildTipRow('👶 Week $_pregnancyWeek Specific Advice', _nutritionAnalysis!['smart_tips_for_today']['pregnancy_week_specific_advice']),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                
-                // Pregnancy Benefits and Tips
-                if (_nutritionAnalysis!['pregnancy_benefits'] != null && 
-                    _nutritionAnalysis!['pregnancy_benefits'].toString().isNotEmpty) ...[
-                  Text(
-                    '🤱 Pregnancy Benefits & Tips:',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.pink[700],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.pink[50],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.pink[200]!),
-                    ),
-                    child: Text(
-                      _nutritionAnalysis!['pregnancy_benefits'].toString(),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        height: 1.4,
-                        color: Colors.pink[800],
-                      ),
-                    ),
-                  ),
-                ],
-                
-                const SizedBox(height: 12),
-                
-                // Safety Considerations
-                if (_nutritionAnalysis!['safety_considerations'] != null && 
-                    _nutritionAnalysis!['safety_considerations'].toString().isNotEmpty) ...[
-                  Text(
-                    '⚠️ Safety Considerations:',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.orange[700],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.orange[50],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.orange[200]!),
-                    ),
-                    child: Text(
-                      _nutritionAnalysis!['safety_considerations'].toString(),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        height: 1.4,
-                        color: Colors.orange[800],
-                      ),
-                    ),
-                  ),
-                ],
-                
-                const SizedBox(height: 12),
-                
-                // Portion Recommendations
-                if (_nutritionAnalysis!['portion_recommendations'] != null && 
-                    _nutritionAnalysis!['portion_recommendations'].toString().isNotEmpty) ...[
-                  Text(
-                    '🍽️ Portion Recommendations:',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue[700],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[50],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.blue[200]!),
-                    ),
-                    child: Text(
-                      _nutritionAnalysis!['portion_recommendations'].toString(),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        height: 1.4,
-                        color: Colors.blue[800],
-                      ),
-                    ),
-                  ),
-                ],
-                
-                const SizedBox(height: 12),
-                
-                // Alternative Suggestions
-                if (_nutritionAnalysis!['alternative_suggestions'] != null && 
-                    _nutritionAnalysis!['alternative_suggestions'].toString().isNotEmpty) ...[
-                  Text(
-                    '🔄 Alternative Suggestions:',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.teal[700],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.teal[50],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.teal[200]!),
-                    ),
-                    child: Text(
-                      _nutritionAnalysis!['alternative_suggestions'].toString(),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        height: 1.4,
-                        color: Colors.teal[800],
-                      ),
-                    ),
-                  ),
-                ],
-                
-                const SizedBox(height: 16),
-                
-                // Analysis Source
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.verified, color: Colors.green[600], size: 16),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Enhanced analysis provided by GPT-4',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
-                          fontStyle: FontStyle.italic,
+                        Row(
+                          children: [
+                            Icon(Icons.psychology,
+                                color: Colors.green[700], size: 24),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Enhanced Nutrition Analysis',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                      color: Colors.green[700],
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-               ],
-        
-        // Daily Calorie Summary Button
-        // _buildDailyCalorieSummaryCard(), // Removed as per edit hint
-      ],
-    ),
-  ),
-),
-);
-}
+                        const SizedBox(height: 16),
 
-  // Daily Calorie Summary Button
-  Widget _buildDailyCalorieSummaryCard() {
-    return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '📊 Daily Calorie Summary',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              
-              // Information about GPT-4 analysis and calorie tracking
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.green[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green[200]!),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.psychology, color: Colors.green[600], size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          'AI-Powered Nutrition Analysis',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.green[800],
-                            fontWeight: FontWeight.w600,
+                        // Daily Calorie Tracking Section
+                        if (_nutritionAnalysis!['daily_calorie_tracking'] !=
+                            null) ...[
+                          Text(
+                            '📊 Daily Calorie Tracking',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue[700],
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.blue[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.blue[200]!),
+                            ),
+                            child: Column(
+                              children: [
+                                _buildCalorieRow(
+                                    'Minimum Daily Calories',
+                                    '${_nutritionAnalysis!['daily_calorie_tracking']['minimum_daily_calories'] ?? 0} kcal',
+                                    Colors.blue),
+                                _buildCalorieRow(
+                                    'Recommended Daily Calories',
+                                    '${_nutritionAnalysis!['daily_calorie_tracking']['recommended_daily_calories'] ?? 0} kcal',
+                                    Colors.green),
+                                _buildCalorieRow(
+                                    'Calories Contributed',
+                                    '${_nutritionAnalysis!['daily_calorie_tracking']['calories_contributed'] ?? 0} kcal',
+                                    Colors.orange),
+                                _buildCalorieRow(
+                                    'Percentage of Daily Needs',
+                                    '${_nutritionAnalysis!['daily_calorie_tracking']['percentage_of_daily_needs'] ?? 0}%',
+                                    Colors.purple),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+
+                        // Remaining Calories Section
+                        if (_nutritionAnalysis!['remaining_calories'] !=
+                            null) ...[
+                          Text(
+                            '🍽️ Remaining Calories Today',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange[700],
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.orange[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.orange[200]!),
+                            ),
+                            child: Column(
+                              children: [
+                                _buildCalorieRow(
+                                    'Calories Remaining',
+                                    '${_nutritionAnalysis!['remaining_calories']['calories_remaining'] ?? 0} kcal',
+                                    Colors.orange),
+                                _buildCalorieRow(
+                                    'Meals Remaining',
+                                    '${_nutritionAnalysis!['remaining_calories']['meals_remaining'] ?? 0} meals',
+                                    Colors.red),
+                                _buildCalorieRow(
+                                    'Calories per Remaining Meal',
+                                    '${_nutritionAnalysis!['remaining_calories']['calories_per_remaining_meal'] ?? 0} kcal',
+                                    Colors.green),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+
+                        // Calculated nutrition values from GPT
+                        if (_nutritionAnalysis!['nutritional_breakdown'] !=
+                            null) ...[
+                          Text(
+                            '🍎 Calculated Values from GPT-4:',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green[800],
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+
+                          // Nutrition breakdown in a grid
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.green[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.green[200]!),
+                            ),
+                            child: Column(
+                              children: [
+                                _buildNutritionRow(
+                                    'Calories',
+                                    '${_nutritionAnalysis!['nutritional_breakdown']['estimated_calories'] ?? 0} kcal',
+                                    Colors.orange),
+                                _buildNutritionRow(
+                                    'Protein',
+                                    '${_nutritionAnalysis!['nutritional_breakdown']['protein_grams'] ?? 0} g',
+                                    Colors.red),
+                                _buildNutritionRow(
+                                    'Carbs',
+                                    '${_nutritionAnalysis!['nutritional_breakdown']['carbohydrates_grams'] ?? 0} g',
+                                    Colors.blue),
+                                _buildNutritionRow(
+                                    'Fat',
+                                    '${_nutritionAnalysis!['nutritional_breakdown']['fat_grams'] ?? 0} g',
+                                    Colors.purple),
+                                _buildNutritionRow(
+                                    'Fiber',
+                                    '${_nutritionAnalysis!['nutritional_breakdown']['fiber_grams'] ?? 0} g',
+                                    Colors.green),
+                              ],
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 16),
+
+                        // Smart Tips for Today Section
+                        if (_nutritionAnalysis!['smart_tips_for_today'] !=
+                            null) ...[
+                          Text(
+                            '💡 Smart Tips for Today',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.teal[700],
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.teal[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.teal[200]!),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (_nutritionAnalysis!['smart_tips_for_today']
+                                        ['next_meal_suggestions'] !=
+                                    null) ...[
+                                  _buildTipRow(
+                                      '🍽️ Next Meal Suggestions',
+                                      _nutritionAnalysis![
+                                              'smart_tips_for_today']
+                                          ['next_meal_suggestions']),
+                                  const SizedBox(height: 8),
+                                ],
+                                if (_nutritionAnalysis!['smart_tips_for_today']
+                                        ['best_combinations'] !=
+                                    null) ...[
+                                  _buildTipRow(
+                                      '🌟 Best Food Combinations',
+                                      _nutritionAnalysis![
+                                              'smart_tips_for_today']
+                                          ['best_combinations']),
+                                  const SizedBox(height: 8),
+                                ],
+                                if (_nutritionAnalysis!['smart_tips_for_today']
+                                        ['hydration_tips'] !=
+                                    null) ...[
+                                  _buildTipRow(
+                                      '💧 Hydration Tips',
+                                      _nutritionAnalysis![
+                                              'smart_tips_for_today']
+                                          ['hydration_tips']),
+                                  const SizedBox(height: 8),
+                                ],
+                                if (_nutritionAnalysis!['smart_tips_for_today']
+                                        ['pregnancy_week_specific_advice'] !=
+                                    null) ...[
+                                  _buildTipRow(
+                                      '👶 Week $_pregnancyWeek Specific Advice',
+                                      _nutritionAnalysis![
+                                              'smart_tips_for_today']
+                                          ['pregnancy_week_specific_advice']),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+
+                        // Pregnancy Benefits and Tips
+                        if (_nutritionAnalysis!['pregnancy_benefits'] != null &&
+                            _nutritionAnalysis!['pregnancy_benefits']
+                                .toString()
+                                .isNotEmpty) ...[
+                          Text(
+                            '🤱 Pregnancy Benefits & Tips:',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.pink[700],
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.pink[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.pink[200]!),
+                            ),
+                            child: Text(
+                              _nutritionAnalysis!['pregnancy_benefits']
+                                  .toString(),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    height: 1.4,
+                                    color: Colors.pink[800],
+                                  ),
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 12),
+
+                        // Safety Considerations
+                        if (_nutritionAnalysis!['safety_considerations'] !=
+                                null &&
+                            _nutritionAnalysis!['safety_considerations']
+                                .toString()
+                                .isNotEmpty) ...[
+                          Text(
+                            '⚠️ Safety Considerations:',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange[700],
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.orange[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.orange[200]!),
+                            ),
+                            child: Text(
+                              _nutritionAnalysis!['safety_considerations']
+                                  .toString(),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    height: 1.4,
+                                    color: Colors.orange[800],
+                                  ),
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 12),
+
+                        // Portion Recommendations
+                        if (_nutritionAnalysis!['portion_recommendations'] !=
+                                null &&
+                            _nutritionAnalysis!['portion_recommendations']
+                                .toString()
+                                .isNotEmpty) ...[
+                          Text(
+                            '🍽️ Portion Recommendations:',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue[700],
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.blue[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.blue[200]!),
+                            ),
+                            child: Text(
+                              _nutritionAnalysis!['portion_recommendations']
+                                  .toString(),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    height: 1.4,
+                                    color: Colors.blue[800],
+                                  ),
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 12),
+
+                        // Alternative Suggestions
+                        if (_nutritionAnalysis!['alternative_suggestions'] !=
+                                null &&
+                            _nutritionAnalysis!['alternative_suggestions']
+                                .toString()
+                                .isNotEmpty) ...[
+                          Text(
+                            '🔄 Alternative Suggestions:',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.teal[700],
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.teal[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.teal[200]!),
+                            ),
+                            child: Text(
+                              _nutritionAnalysis!['alternative_suggestions']
+                                  .toString(),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    height: 1.4,
+                                    color: Colors.teal[800],
+                                  ),
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 16),
+
+                        // Analysis Source
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.verified,
+                                  color: Colors.green[600], size: 16),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Enhanced analysis provided by GPT-4',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: Colors.grey[600],
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Your daily calorie summary and nutrition tracking are powered by GPT-4 analysis. Each food entry is automatically analyzed for:',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.green[700],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    _buildAnalysisPoint('🍎 Nutritional breakdown (calories, protein, carbs, fat)'),
-                    _buildAnalysisPoint('🤱 Pregnancy-specific benefits and advice'),
-                    _buildAnalysisPoint('⚠️ Safety considerations and cooking tips'),
-                    _buildAnalysisPoint('📊 Daily tracking and remaining nutritional needs'),
-                    _buildAnalysisPoint('💡 Smart recommendations for next meals'),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Storage: All analysis results are stored in Patient_test → food_data array → entry_type: "gpt4_analyzed"',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.green[600],
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              
-              // Daily calorie summary functionality removed - now powered by GPT-4 analysis
+              ],
+
+              // Daily Calorie Summary Button
+              // _buildDailyCalorieSummaryCard(), // Removed as per edit hint
             ],
           ),
         ),
-      );
+      ),
+    );
+  }
+
+  // Daily Calorie Summary Button
+  Widget _buildDailyCalorieSummaryCard() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '📊 Daily Calorie Summary',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 12),
+
+            // Information about GPT-4 analysis and calorie tracking
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.green[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.green[200]!),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.psychology,
+                          color: Colors.green[600], size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'AI-Powered Nutrition Analysis',
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: Colors.green[800],
+                                  fontWeight: FontWeight.w600,
+                                ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Your daily calorie summary and nutrition tracking are powered by GPT-4 analysis. Each food entry is automatically analyzed for:',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.green[700],
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildAnalysisPoint(
+                      '🍎 Nutritional breakdown (calories, protein, carbs, fat)'),
+                  _buildAnalysisPoint(
+                      '🤱 Pregnancy-specific benefits and advice'),
+                  _buildAnalysisPoint(
+                      '⚠️ Safety considerations and cooking tips'),
+                  _buildAnalysisPoint(
+                      '📊 Daily tracking and remaining nutritional needs'),
+                  _buildAnalysisPoint(
+                      '💡 Smart recommendations for next meals'),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Storage: All analysis results are stored in Patient_test → food_data array → entry_type: "gpt4_analyzed"',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.green[600],
+                          fontStyle: FontStyle.italic,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Daily calorie summary functionality removed - now powered by GPT-4 analysis
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildMealTypeButton(String mealType, String label, IconData icon) {
@@ -2329,8 +2553,14 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: color)),
-        Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, color: color)),
+        Text(label,
+            style:
+                Theme.of(context).textTheme.bodyMedium?.copyWith(color: color)),
+        Text(value,
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(fontWeight: FontWeight.bold, color: color)),
       ],
     );
   }
@@ -2341,8 +2571,16 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: color)),
-          Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, color: color)),
+          Text(label,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: color)),
+          Text(value,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(fontWeight: FontWeight.bold, color: color)),
         ],
       ),
     );
@@ -2352,7 +2590,11 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+        Text(title,
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
         Text(content, style: Theme.of(context).textTheme.bodyMedium),
       ],
@@ -2370,8 +2612,8 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
             child: Text(
               text,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.green[700],
-              ),
+                    color: Colors.green[700],
+                  ),
             ),
           ),
         ],
@@ -2390,7 +2632,7 @@ class _PatientFoodTrackingScreenState extends State<PatientFoodTrackingScreen> {
       return date.toString();
     }
   }
-  
+
   // Remove the unused _openDetailedFoodEntry method
   // void _openDetailedFoodEntry() async { ... }
-} 
+}

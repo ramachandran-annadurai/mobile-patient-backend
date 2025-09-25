@@ -207,6 +207,8 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  String? _signupToken; // Store signup token for OTP verification
+
   Future<bool> signup({
     required String username,
     required String email,
@@ -235,6 +237,52 @@ class AuthProvider extends ChangeNotifier {
         return false;
       }
 
+      // Store signup token for OTP verification
+      _signupToken = response['signup_token'];
+      
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = 'Network error: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> resendOtp({
+    required String email,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      // Check if we have a signup token
+      if (_signupToken == null) {
+        _error = 'No signup session found. Please start registration again.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // Use regular ApiService for patient OTP resend
+      final response = await _apiService.resendOtp(
+        email: email,
+        signupToken: _signupToken!,
+      );
+
+      if (response.containsKey('error')) {
+        _error = response['error'];
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // Update signup token with new one
+      _signupToken = response['signup_token'];
+
       _isLoading = false;
       notifyListeners();
       return true;
@@ -257,12 +305,30 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Check if we have a signup token
+      if (_signupToken == null) {
+        _error = 'No signup session found. Please start registration again.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
       // Use regular ApiService for patient OTP verification
       final response = await _apiService.verifyOtp(
         email: email,
         otp: otp,
         role: role,
+        signupToken: _signupToken!,
       );
+
+      // Debug logging
+      print('🔍 AuthProvider Debug - OTP Verification Response:');
+      print('  Response: $response');
+      print('  Contains error: ${response.containsKey('error')}');
+      print('  Patient ID: ${response['patient_id']}');
+      print('  Email: ${response['email']}');
+      print('  Username: ${response['username']}');
+      print('  Token: ${response['token']}');
 
       if (response.containsKey('error')) {
         _error = response['error'];
@@ -273,11 +339,19 @@ class AuthProvider extends ChangeNotifier {
 
       if (response['patient_id'] != null) {
         _isLoggedIn = true;
-        _patientId = response['patient_id'];
-        _email = response['email'];
-        _username = response['username'];
-        _token = response['token'];
-        _objectId = response['objectId']; // Store Object ID
+        _patientId = response['patient_id'] ?? "";
+        _email = response['email'] ?? "";
+        _username = response['username'] ?? "";
+        _token = response['token'] ?? "";
+        _objectId = response['objectId'] ?? response['object_id'] ?? ""; // Handle both field names or default to empty
+
+        // Validate required fields
+        if (_patientId!.isEmpty || _email!.isEmpty || _username!.isEmpty || _token!.isEmpty) {
+          _error = 'OTP verification response missing required fields';
+          _isLoading = false;
+          notifyListeners();
+          return false;
+        }
 
         // Save to SharedPreferences
         final prefs = await SharedPreferences.getInstance();
@@ -291,6 +365,9 @@ class AuthProvider extends ChangeNotifier {
 
         // Set token in API service
         ApiService.setAuthToken(_token!);
+
+        // Clear signup token after successful verification
+        _signupToken = null;
 
         _isLoading = false;
         notifyListeners();
@@ -384,6 +461,7 @@ class AuthProvider extends ChangeNotifier {
     _error = null;
     _role = null;
     _objectId = null; // Clear Object ID on logout
+    _signupToken = null; // Clear signup token on logout
 
     // Clear SharedPreferences
     final prefs = await SharedPreferences.getInstance();

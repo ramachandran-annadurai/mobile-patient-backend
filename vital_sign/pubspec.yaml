@@ -1,0 +1,69 @@
+name: vital_signs_monitor
+description: A comprehensive Vital Signs Monitoring mobile application
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management
+  provider: ^6.1.1
+  
+  # Database
+  sqflite: ^2.3.0
+  path: ^1.8.3
+  mongo_dart: ^0.10.5
+  
+  # Charts and Visualization
+  fl_chart: ^0.66.0
+  
+  # Date and Time
+  intl: ^0.19.0
+  
+  # HTTP and API
+  http: ^0.13.6
+  
+  # Local Storage
+  shared_preferences: ^2.2.2
+  
+  # UI Components
+  cupertino_icons: ^1.0.6
+  material_design_icons_flutter: ^7.0.7296
+  
+  # Validation
+  form_validator: ^2.1.1
+  
+  # Notifications
+  flutter_local_notifications: ^16.3.0
+  
+  # Environment Configuration
+  flutter_dotenv: ^5.1.0
+  
+  # JSON Serialization
+  json_annotation: ^4.8.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  json_serializable: ^6.7.1
+  build_runner: ^2.4.7
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/icons/
+    - .env
+  
+  # fonts:
+  #   - family: Roboto
+  #     fonts:
+  #       - asset: fonts/Roboto-Regular.ttf
+  #       - asset: fonts/Roboto-Bold.ttf
+  #         weight: 700

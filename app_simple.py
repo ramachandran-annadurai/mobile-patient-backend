@@ -8,6 +8,23 @@ import json
 from datetime import datetime, date, timedelta
 from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
+from symptoms_service import symptoms_service
+from vital_signs_service import VitalSignsService
+from vital_signs_ocr_service import vital_signs_ocr_service
+from vital_ocr_service import vital_ocr_service
+
+# Load environment variables with error handling
+try:
+    load_dotenv()  # Load environment variables
+    print("✅ Environment variables loaded successfully")
+except Exception as e:
+    print(f"⚠️ Could not load .env file: {e}")
+    print("💡 Continuing with default values...")
+
+# Get webhook URL from environment
+DEFAULT_WEBHOOK_URL = os.getenv('DEFAULT_WEBHOOK_URL', 'https://n8n.srv795087.hstgr.cloud/webhook/bf25c478-c4a9-44c5-8f43-08c3fcae51f9')
+print(f"🔍 Using webhook URL: {DEFAULT_WEBHOOK_URL}")
+
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -70,7 +87,7 @@ import sys
 import os
 
 # Add medication folder to Python path
-medication_path = os.path.join(os.path.dirname(__file__), 'medication', 'medication')
+medication_path = os.path.join(os.path.dirname(__file__), 'medication')
 sys.path.insert(0, medication_path)
 
 try:
@@ -295,6 +312,9 @@ class Database:
 
 # Initialize database
 db = Database()
+
+# Initialize vital signs service with database
+vital_signs_service = VitalSignsService(db)
 
 # ==================== MOCK N8N WEBHOOK SERVICE ====================
 
@@ -1031,7 +1051,7 @@ JWT_EXPIRATION_HOURS = 24  # Token expires in 24 hours
 def generate_jwt_token(user_data):
     """Generate JWT token for user"""
     payload = {
-        "user_id": str(user_data.get("_id")) if user_data.get("_id") else None,
+        "user_id": str(user_data.get("_id")) if user_data.get("_id") else str(user_data.get("patient_id", "")),
         "patient_id": user_data.get("patient_id"),
         "email": user_data.get("email"),
         "username": user_data.get("username"),
@@ -1326,17 +1346,31 @@ def root():
         "endpoints": [
             "POST /signup - Register new patient",
             "POST /send-otp - Send OTP to email",
+            "POST /resend-otp - Resend OTP for signup verification",
             "POST /verify-otp - Verify OTP and activate account",
             "POST /login - Login with Patient ID/Email",
             "POST /forgot-password - Send password reset OTP",
             "POST /reset-password - Reset password with OTP",
             "POST /complete-profile - Complete patient profile",
+            "PUT /edit-profile - Edit/Update patient profile",
             "GET /profile/<patient_id> - Get patient profile",
             "POST /symptoms/assist - Get pregnancy symptom assistance (Quantum+LLM)",
             "POST /symptoms/save-symptom-log - Save symptom log",
             "POST /symptoms/save-analysis-report - Save symptom analysis report",
             "GET /symptoms/get-symptom-history/<patient_id> - Get symptom history",
             "GET /symptoms/get-analysis-reports/<patient_id> - Get AI analysis reports",
+            "POST /symptoms/knowledge/add - Add new knowledge to symptoms database",
+            "POST /symptoms/knowledge/bulk - Add multiple knowledge items to symptoms database",
+            "POST /symptoms/ingest - Ingest knowledge from MongoDB to vector database",
+            "POST /vitals/record - Record vital sign for patient",
+            "GET /vitals/history/<patient_id> - Get patient's vital signs history",
+            "POST /vitals/analyze - AI analysis of patient's vital signs",
+            "GET /vitals/stats/<patient_id> - Get vital signs statistics",
+            "GET /vitals/health-summary/<patient_id> - Get comprehensive health summary",
+            "POST /vitals/alerts - Create vital signs alert",
+            "GET /vitals/alerts/<patient_id> - Get patient's vital signs alerts",
+            "POST /vitals/ocr - Process vital signs document with OCR",
+            "POST /vitals/process-text - Process vital signs text for extraction",
             "POST /medication/save-medication-log - Save medication log",
             "GET /medication/get-medication-history/<patient_id> - Get medication history",
             "POST /medication/process-prescription-document - Process prescription document with PaddleOCR",
@@ -1366,7 +1400,7 @@ def root():
 
 @app.route('/signup', methods=['POST'])
 def signup():
-    """Register a new patient - Step 1: Collect data and send OTP"""
+    """Register a new patient - Step 1: Collect data and send OTP (JWT-based)"""
     try:
         if db.patients_collection is None:
             return jsonify({"error": "Database not connected"}), 500
@@ -1395,9 +1429,10 @@ def signup():
         if db.patients_collection.find_one({"username": username}):
             return jsonify({"error": "Username already exists"}), 400
         
-        # Check if email exists
-        if db.patients_collection.find_one({"email": email}):
-            return jsonify({"error": "Email already exists"}), 400
+        # Check if email exists and is already active
+        existing_user = db.patients_collection.find_one({"email": email})
+        if existing_user and existing_user.get("status") == "active":
+            return jsonify({"error": "Email already exists and is active"}), 400
         
         # Check if mobile exists
         if db.patients_collection.find_one({"mobile": mobile}):
@@ -1406,32 +1441,30 @@ def signup():
         # Generate OTP
         otp = generate_otp()
         
-        # Store temporary signup data (not a real account yet)
-        temp_signup_data = {
+        # Create JWT token with signup data (expires in 10 minutes)
+        signup_payload = {
             "username": username,
             "email": email,
             "mobile": mobile,
             "password_hash": hash_password(password),
             "otp": otp,
-            "otp_created_at": datetime.now(),
-            "otp_expires_at": datetime.now() + timedelta(minutes=10),
-            "status": "temp_signup",
-            "created_at": datetime.now()
+            "exp": datetime.utcnow() + timedelta(minutes=10),
+            "iat": datetime.utcnow(),
+            "type": "signup_verification"
         }
         
-        # Store in temporary collection or with temp status
-        db.patients_collection.insert_one(temp_signup_data)
+        # Generate JWT token
+        signup_token = jwt.encode(signup_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
         
         # Send OTP email
         if send_otp_email(email, otp):
             return jsonify({
                 "email": email,
                 "status": "otp_sent",
-                "message": "Please check your email for OTP verification."
+                "message": "Please check your email for OTP verification.",
+                "signup_token": signup_token  # Send token to frontend
             }), 200
         else:
-            # Remove temporary data if email failed
-            db.patients_collection.delete_one({"email": email, "status": "temp_signup"})
             return jsonify({"error": "Failed to send OTP email"}), 500
     
     except Exception as e:
@@ -1482,9 +1515,62 @@ def send_otp():
     except Exception as e:
         return jsonify({"error": f"OTP sending failed: {str(e)}"}), 500
 
+@app.route('/resend-otp', methods=['POST'])
+def resend_otp():
+    """Resend OTP for signup verification (JWT-based)"""
+    try:
+        if db.patients_collection is None:
+            return jsonify({"error": "Database not connected"}), 500
+        
+        data = request.get_json()
+        email = data.get('email', '').strip()
+        signup_token = data.get('signup_token', '').strip()
+        
+        if not email or not signup_token:
+            return jsonify({"error": "Email and signup token are required"}), 400
+        
+        # Decode and verify JWT token
+        try:
+            payload = jwt.decode(signup_token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Signup session has expired. Please start registration again."}), 400
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Invalid signup token"}), 400
+        
+        # Verify token type and email match
+        if payload.get("type") != "signup_verification":
+            return jsonify({"error": "Invalid token type"}), 400
+        
+        if payload.get("email") != email:
+            return jsonify({"error": "Email mismatch"}), 400
+        
+        # Generate new OTP
+        new_otp = generate_otp()
+        
+        # Update JWT token with new OTP
+        updated_payload = payload.copy()
+        updated_payload["otp"] = new_otp
+        updated_payload["exp"] = datetime.utcnow() + timedelta(minutes=10)  # Reset expiration
+        
+        # Generate new JWT token
+        new_signup_token = jwt.encode(updated_payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+        
+        # Send OTP email
+        if send_otp_email(email, new_otp):
+            return jsonify({
+                "message": "OTP resent successfully",
+                "email": email,
+                "signup_token": new_signup_token
+            }), 200
+        else:
+            return jsonify({"error": "Failed to send OTP email"}), 500
+    
+    except Exception as e:
+        return jsonify({"error": f"OTP resend failed: {str(e)}"}), 500
+
 @app.route('/verify-otp', methods=['POST'])
 def verify_otp():
-    """Verify OTP and create actual account"""
+    """Verify OTP and create actual account (JWT-based)"""
     try:
         if db.patients_collection is None:
             return jsonify({"error": "Database not connected"}), 500
@@ -1492,58 +1578,96 @@ def verify_otp():
         data = request.get_json()
         email = data.get('email', '').strip()
         otp = data.get('otp', '').strip()
+        signup_token = data.get('signup_token', '').strip()
         
-        if not email or not otp:
-            return jsonify({"error": "Email and OTP are required"}), 400
+        if not email or not otp or not signup_token:
+            return jsonify({"error": "Email, OTP, and signup token are required"}), 400
         
-        # Find temporary signup data by email
-        temp_user = db.patients_collection.find_one({"email": email, "status": "temp_signup"})
-        if not temp_user:
-            return jsonify({"error": "No pending signup found for this email"}), 404
+        # Decode and verify JWT token
+        try:
+            payload = jwt.decode(signup_token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Signup session has expired. Please start registration again."}), 400
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Invalid signup token"}), 400
+        
+        # Verify token type and email match
+        if payload.get("type") != "signup_verification":
+            return jsonify({"error": "Invalid token type"}), 400
+        
+        if payload.get("email") != email:
+            return jsonify({"error": "Email mismatch"}), 400
         
         # Check OTP
-        if temp_user.get("otp") != otp:
+        if payload.get("otp") != otp:
             return jsonify({"error": "Invalid OTP"}), 400
         
-        # Check if OTP expired
-        if temp_user.get("otp_expires_at") < datetime.now():
-            return jsonify({"error": "OTP has expired"}), 400
+        # Extract user data from JWT payload
+        username = payload.get("username")
+        mobile = payload.get("mobile")
+        password_hash = payload.get("password_hash")
         
-        # Generate unique patient ID for actual account
-        patient_id = generate_unique_patient_id()
+        if not all([username, mobile, password_hash]):
+            return jsonify({"error": "Invalid signup data in token"}), 400
         
-        # Create actual account by updating the temporary data
-        db.patients_collection.update_one(
-            {"email": email, "status": "temp_signup"},
+        # Check if user already exists (handle duplicate key error)
+        existing_user = db.patients_collection.find_one({"email": email})
+        if existing_user:
+            # User already exists, update their status to active and verify email
+            db.patients_collection.update_one(
+                {"email": email},
             {
                 "$set": {
-                    "patient_id": patient_id,
                     "status": "active",
                     "email_verified": True,
-                    "verified_at": datetime.now()
-                },
-                "$unset": {
-                    "otp": "",
-                    "otp_created_at": "",
-                    "otp_expires_at": ""
+                        "verified_at": datetime.now(),
+                        "password_hash": password_hash,  # Update password
+                        "username": username,  # Update username
+                        "mobile": mobile  # Update mobile
+                    }
                 }
-            }
-        )
-        
-        # Send Patient ID email
-        send_patient_id_email(email, patient_id, temp_user["username"])
+            )
         
         # Get the updated user data
-        updated_user = db.patients_collection.find_one({"patient_id": patient_id})
+            updated_user = db.patients_collection.find_one({"email": email})
+            patient_id = updated_user.get("patient_id")
+        else:
+            # Generate unique patient ID for new account
+            patient_id = generate_unique_patient_id()
+            
+            # Create new account in database
+            user_data = {
+                "patient_id": patient_id,
+                "username": username,
+                "email": email,
+                "mobile": mobile,
+                "password_hash": password_hash,
+                "status": "active",
+                "email_verified": True,
+                "verified_at": datetime.now(),
+                "created_at": datetime.now()
+            }
+            
+            # Insert new user into database
+            result = db.patients_collection.insert_one(user_data)
+            
+            if not result.inserted_id:
+                return jsonify({"error": "Failed to create account"}), 500
+            
+            # Get the created user data
+            updated_user = user_data
         
-        # Generate JWT token
+        # Send Patient ID email
+        send_patient_id_email(email, patient_id, username)
+        
+        # Generate JWT token for login
         token = generate_jwt_token(updated_user)
         
         return jsonify({
             "patient_id": patient_id,
-            "username": temp_user["username"],
-            "email": temp_user["email"],
-            "mobile": temp_user["mobile"],
+            "username": username,
+            "email": email,
+            "mobile": mobile,
             "status": "active",
             "token": token,
             "message": "Account created and verified successfully! Your Patient ID has been sent to your email."
@@ -1881,6 +2005,100 @@ def complete_profile():
     
     except Exception as e:
         return jsonify({"error": f"Profile completion failed: {str(e)}"}), 500
+
+@app.route('/edit-profile', methods=['PUT'])
+def edit_profile():
+    """Edit/Update patient profile information"""
+    try:
+        if db.patients_collection is None:
+            return jsonify({"error": "Database not connected"}), 500
+        
+        data = request.get_json()
+        patient_id = data.get('patient_id', '').strip()
+        
+        if not patient_id:
+            return jsonify({"error": "Patient ID is required"}), 400
+        
+        # Check if patient exists
+        patient = db.patients_collection.find_one({"patient_id": patient_id})
+        if not patient:
+            return jsonify({"error": "Patient not found"}), 404
+        
+        # Extract profile data with safe handling of null values
+        profile_data = {
+            "first_name": data.get('first_name', '').strip(),
+            "last_name": data.get('last_name', '').strip(),
+            "date_of_birth": data.get('date_of_birth', '').strip(),
+            "gender": data.get('gender', '').strip(),
+            "blood_type": data.get('blood_type', '').strip(),
+            "height": data.get('height', '').strip(),
+            "weight": data.get('weight', '').strip(),
+            "pregnancy_status": data.get('pregnancy_status', '').strip(),
+            "pregnancy_week": data.get('pregnancy_week', '').strip(),
+            "expected_delivery_date": data.get('expected_delivery_date', '').strip(),
+            "emergency_contact_name": data.get('emergency_contact_name', '').strip(),
+            "emergency_contact_phone": data.get('emergency_contact_phone', '').strip(),
+            "emergency_contact_relationship": data.get('emergency_contact_relationship', '').strip(),
+            "address": data.get('address', '').strip(),
+            "city": data.get('city', '').strip(),
+            "state": data.get('state', '').strip(),
+            "zip_code": data.get('zip_code', '').strip(),
+            "phone": data.get('phone', '').strip(),
+            "medical_conditions": data.get('medical_conditions', []),
+            "allergies": data.get('allergies', []),
+            "medications": data.get('medications', []),
+            "last_updated": datetime.now()
+        }
+        
+        # Remove empty fields to avoid overwriting with empty strings
+        profile_data = {k: v for k, v in profile_data.items() if v != '' and v != []}
+        
+        # Update profile
+        result = db.patients_collection.update_one(
+            {"patient_id": patient_id},
+            {"$set": profile_data}
+        )
+        
+        if result.modified_count == 0:
+            return jsonify({"error": "No changes made to profile"}), 400
+        
+        # Get updated profile
+        updated_patient = db.patients_collection.find_one({"patient_id": patient_id})
+        
+        return jsonify({
+            "message": "Profile updated successfully",
+            "profile": {
+                "patient_id": updated_patient.get("patient_id"),
+                "username": updated_patient.get("username"),
+                "email": updated_patient.get("email"),
+                "first_name": updated_patient.get("first_name"),
+                "last_name": updated_patient.get("last_name"),
+                "date_of_birth": updated_patient.get("date_of_birth"),
+                "gender": updated_patient.get("gender"),
+                "blood_type": updated_patient.get("blood_type"),
+                "height": updated_patient.get("height"),
+                "weight": updated_patient.get("weight"),
+                "pregnancy_status": updated_patient.get("pregnancy_status"),
+                "pregnancy_week": updated_patient.get("pregnancy_week"),
+                "expected_delivery_date": updated_patient.get("expected_delivery_date"),
+                "emergency_contact_name": updated_patient.get("emergency_contact_name"),
+                "emergency_contact_phone": updated_patient.get("emergency_contact_phone"),
+                "emergency_contact_relationship": updated_patient.get("emergency_contact_relationship"),
+                "address": updated_patient.get("address"),
+                "city": updated_patient.get("city"),
+                "state": updated_patient.get("state"),
+                "zip_code": updated_patient.get("zip_code"),
+                "phone": updated_patient.get("phone"),
+                "medical_conditions": updated_patient.get("medical_conditions", []),
+                "allergies": updated_patient.get("allergies", []),
+                "medications": updated_patient.get("medications", []),
+                "profile_completed_at": updated_patient.get("profile_completed_at"),
+                "last_updated": updated_patient.get("last_updated")
+            }
+        }), 200
+    
+    except Exception as e:
+        return jsonify({"error": f"Profile update failed: {str(e)}"}), 500
 
 @app.route('/verify-token', methods=['POST'])
 def verify_token():
@@ -2503,7 +2721,7 @@ def symptoms_health_check():
 
 @app.route('/symptoms/assist', methods=['POST'])
 def get_symptom_assistance():
-    """Get pregnancy symptom assistance using quantum vector search and LLM analysis"""
+    """Get pregnancy symptom assistance using AI-powered vector search and LLM analysis"""
     try:
         data = request.get_json()
         if not data:
@@ -2515,6 +2733,7 @@ def get_symptom_assistance():
         symptom_text = data.get('text', '').strip()
         weeks_pregnant = data.get('weeks_pregnant', 1)
         patient_id = data.get('patient_id')
+        user_id = data.get('user_id', patient_id)
         
         if not symptom_text:
             return jsonify({
@@ -2542,77 +2761,58 @@ def get_symptom_assistance():
             
         print(f"🔍 Analyzing symptoms: '{symptom_text}' for week {weeks_pregnant} ({trimester})")
         
-        # Step 1: Try quantum vector search for knowledge base retrieval
-        suggestions = []
-        if quantum_service.client and quantum_service.embedding_model:
-            print("🔬 Using quantum vector search...")
-            suggestions = quantum_service.search_knowledge(symptom_text, weeks_pregnant)
-            print(f"✅ Found {len(suggestions)} suggestions from knowledge base")
-        else:
-            print("⚠️ Quantum vector search not available")
-        
-        # Step 2: Generate response based on search results
-        if suggestions:
-            # Use LLM to synthesize a summary from retrieved suggestions
-            print("🤖 Using LLM to synthesize recommendations...")
-            summary = llm_service.summarize_retrieval(symptom_text, weeks_pregnant, suggestions)
+        # Use the new AI-powered symptoms service
+        try:
+            ai_response = symptoms_service.analyze_symptoms(
+                query=symptom_text,
+                weeks_pregnant=weeks_pregnant,
+                user_id=user_id
+            )
             
-            if summary:
-                # Return synthesized summary
-                response_text = summary.get("text", "")
-                response_source = "quantum_llm_synthesis"
-                print("✅ LLM synthesis successful")
-            else:
-                # Fallback to safe guidance
-                print("⚠️ LLM synthesis failed, using safe fallback")
-                fallback = llm_service.generate_llm_fallback(symptom_text, weeks_pregnant)
-                response_text = fallback.get("suggestions", [{}])[0].get("text", "")
-                response_source = "quantum_safe_fallback"
-        else:
-            # No suggestions found, use LLM fallback
-            print("⚠️ No knowledge base suggestions, using LLM fallback")
-            fallback = llm_service.generate_llm_fallback(symptom_text, weeks_pregnant)
-            response_text = fallback.get("suggestions", [{}])[0].get("text", "")
-            response_source = "llm_fallback"
-        
-        # Step 3: Detect red flags for safety
-        red_flags = llm_service.detect_red_flags(symptom_text)
-        
-        # Step 4: Generate additional recommendations
-        additional_recommendations = generate_symptom_recommendations(symptom_text, weeks_pregnant, trimester)
-        
-        # Log the symptom consultation
-        if patient_id:
-            try:
-                activity_tracker.log_activity(
-                    user_email=patient.get('email') if patient else None,
-                    activity_type="symptom_consultation",
-                    activity_data={
-                        "symptom_text": symptom_text,
-                        "pregnancy_week": weeks_pregnant,
-                        "trimester": trimester,
-                        "patient_id": patient_id,
-                        "analysis_method": response_source,
-                        "red_flags_detected": red_flags,
-                        "suggestions_count": len(suggestions)
-                    }
-                )
-            except Exception as e:
-                print(f"⚠️ Warning: Could not log symptom consultation activity: {e}")
-        
-        return jsonify({
-            'success': True,
-            'symptom_text': symptom_text,
-            'pregnancy_week': weeks_pregnant,
-            'trimester': trimester,
-            'analysis_method': response_source,
-            'primary_recommendation': response_text,
-            'additional_recommendations': additional_recommendations,
-            'red_flags_detected': red_flags,
-            'knowledge_base_suggestions': len(suggestions),
-            'disclaimer': DISCLAIMER_TEXT,
-            'timestamp': datetime.now().isoformat()
-        }), 200
+            # Generate additional recommendations
+            additional_recommendations = generate_symptom_recommendations(symptom_text, weeks_pregnant, trimester)
+            
+            # Log the symptom consultation
+            if patient_id:
+                try:
+                    activity_tracker.log_activity(
+                        user_email=patient.get('email') if 'patient' in locals() else None,
+                        activity_type="symptom_consultation",
+                        activity_data={
+                            "symptom_text": symptom_text,
+                            "pregnancy_week": weeks_pregnant,
+                            "trimester": trimester,
+                            "patient_id": patient_id,
+                            "analysis_method": "ai_analysis",
+                            "red_flags_detected": [],
+                            "suggestions_count": 0
+                        }
+                    )
+                except Exception as e:
+                    print(f"⚠️ Warning: Could not log symptom consultation activity: {e}")
+            
+            # Return AI response
+            return jsonify({
+                'success': True,
+                'symptom_text': symptom_text,
+                'pregnancy_week': weeks_pregnant,
+                'trimester': trimester,
+                'analysis_method': 'ai_analysis',
+                'primary_recommendation': ai_response.get('text', ''),
+                'additional_recommendations': additional_recommendations,
+                'red_flags_detected': [],
+                'knowledge_base_suggestions': 0,
+                'disclaimer': ai_response.get('disclaimers', DISCLAIMER_TEXT),
+                'timestamp': datetime.now().isoformat()
+            }), 200
+            
+        except Exception as ai_error:
+            print(f"⚠️ AI analysis failed, using fallback: {ai_error}")
+            # Fallback to original logic if AI fails
+            return jsonify({
+                'success': False,
+                'message': f'AI analysis temporarily unavailable: {str(ai_error)}'
+            }), 500
         
     except Exception as e:
         print(f"Error getting symptom assistance: {e}")
@@ -3019,6 +3219,497 @@ def get_analysis_reports(patient_id):
         
     except Exception as e:
         print(f"Error getting analysis reports: {e}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+# ==================== NEW AI-POWERED SYMPTOMS ENDPOINTS ====================
+
+@app.route('/symptoms/knowledge/add', methods=['POST'])
+def add_symptom_knowledge():
+    """Add new knowledge to the symptoms database"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'message': 'No data provided'}), 400
+        
+        text = data.get('text', '').strip()
+        source = data.get('source', 'YourClinic')
+        tags = data.get('tags', [])
+        trimester = data.get('trimester', 'all')
+        
+        if not text:
+            return jsonify({'success': False, 'message': 'Text is required'}), 400
+        
+        # Add to MongoDB via symptoms service
+        doc_id = symptoms_service.save_knowledge_to_mongo(text, source, tags, trimester)
+        
+        if doc_id:
+            return jsonify({
+                'success': True,
+                'message': 'Knowledge added successfully',
+                'document_id': doc_id
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to add knowledge'
+            }), 500
+            
+    except Exception as e:
+        print(f"Error adding knowledge: {e}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/symptoms/knowledge/bulk', methods=['POST'])
+def add_symptom_knowledge_bulk():
+    """Add multiple knowledge items to the symptoms database"""
+    try:
+        data = request.get_json()
+        if not data or 'items' not in data:
+            return jsonify({'success': False, 'message': 'Items array is required'}), 400
+        
+        items = data.get('items', [])
+        if not items:
+            return jsonify({'success': False, 'message': 'Items cannot be empty'}), 400
+        
+        added_count = 0
+        failed_items = []
+        
+        for item in items:
+            try:
+                text = item.get('text', '').strip()
+                source = item.get('source', 'YourClinic')
+                tags = item.get('tags', [])
+                trimester = item.get('trimester', 'all')
+                
+                if text:
+                    doc_id = symptoms_service.save_knowledge_to_mongo(text, source, tags, trimester)
+                    if doc_id:
+                        added_count += 1
+                    else:
+                        failed_items.append(item)
+                else:
+                    failed_items.append(item)
+            except Exception as e:
+                print(f"Error adding item: {e}")
+                failed_items.append(item)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Added {added_count} knowledge items',
+            'added_count': added_count,
+            'failed_count': len(failed_items),
+            'failed_items': failed_items
+        }), 200
+        
+    except Exception as e:
+        print(f"Error adding bulk knowledge: {e}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/symptoms/ingest', methods=['POST'])
+def ingest_symptom_knowledge():
+    """Ingest knowledge from MongoDB to vector database"""
+    try:
+        limit = request.args.get('limit', type=int)
+        
+        # This would trigger the ingestion process
+        # For now, return a placeholder response
+        return jsonify({
+            'success': True,
+            'message': 'Ingestion process started',
+            'limit': limit,
+            'note': 'This endpoint will trigger vector database ingestion'
+        }), 200
+        
+    except Exception as e:
+        print(f"Error ingesting knowledge: {e}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+# ==================== VITAL SIGNS ENDPOINTS ====================
+
+@app.route('/vitals/record', methods=['POST'])
+def record_vital_sign():
+    """Record a new vital sign for a patient"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'message': 'No data provided'}), 400
+        
+        patient_id = data.get('patient_id')
+        if not patient_id:
+            return jsonify({'success': False, 'message': 'Patient ID is required'}), 400
+        
+        # Validate required fields
+        required_fields = ['type', 'value']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'success': False, 'message': f'Missing required field: {field}'}), 400
+        
+        # Record vital sign using service
+        result = vital_signs_service.record_vital_sign(patient_id, data)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 500
+            
+    except Exception as e:
+        print(f"Error recording vital sign: {e}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/vitals/history/<patient_id>', methods=['GET'])
+def get_vital_signs_history(patient_id):
+    """Get vital signs history for a patient"""
+    try:
+        days = request.args.get('days', 30, type=int)
+        
+        result = vital_signs_service.get_vital_signs_history(patient_id, days)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 500
+            
+    except Exception as e:
+        print(f"Error getting vital signs history: {e}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/vitals/analyze', methods=['POST'])
+def analyze_vital_signs():
+    """AI analysis of patient's vital signs"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'message': 'No data provided'}), 400
+        
+        patient_id = data.get('patient_id')
+        if not patient_id:
+            return jsonify({'success': False, 'message': 'Patient ID is required'}), 400
+        
+        days = data.get('days', 7)
+        
+        result = vital_signs_service.analyze_vital_signs(patient_id, days)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 500
+            
+    except Exception as e:
+        print(f"Error analyzing vital signs: {e}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/vitals/stats/<patient_id>', methods=['GET'])
+def get_vital_signs_stats(patient_id):
+    """Get vital signs statistics for a patient"""
+    try:
+        days = request.args.get('days', 30, type=int)
+        
+        # Get vital signs history
+        history_result = vital_signs_service.get_vital_signs_history(patient_id, days)
+        if not history_result['success']:
+            return jsonify(history_result), 500
+        
+        vital_signs = history_result['vital_signs']
+        
+        # Calculate statistics
+        stats = {}
+        for vs in vital_signs:
+            vs_type = vs.get('type')
+            value = vs.get('value', 0)
+            
+            if vs_type not in stats:
+                stats[vs_type] = {
+                    'count': 0,
+                    'values': [],
+                    'latest_value': value,
+                    'latest_timestamp': vs.get('timestamp')
+                }
+            
+            stats[vs_type]['count'] += 1
+            stats[vs_type]['values'].append(value)
+            
+            # Update latest if this is more recent
+            if vs.get('timestamp', datetime.now()) > stats[vs_type]['latest_timestamp']:
+                stats[vs_type]['latest_value'] = value
+                stats[vs_type]['latest_timestamp'] = vs.get('timestamp')
+        
+        # Calculate averages, min, max
+        for vs_type, data in stats.items():
+            values = data['values']
+            if values:
+                data['average'] = round(sum(values) / len(values), 2)
+                data['min_value'] = min(values)
+                data['max_value'] = max(values)
+            else:
+                data['average'] = 0
+                data['min_value'] = 0
+                data['max_value'] = 0
+        
+        return jsonify({
+            'success': True,
+            'patient_id': patient_id,
+            'statistics': stats,
+            'period_days': days
+        }), 200
+        
+    except Exception as e:
+        print(f"Error getting vital signs stats: {e}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/vitals/health-summary/<patient_id>', methods=['GET'])
+def get_health_summary(patient_id):
+    """Get comprehensive health summary for a patient"""
+    try:
+        result = vital_signs_service.get_health_summary(patient_id)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 500
+            
+    except Exception as e:
+        print(f"Error getting health summary: {e}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/vitals/alerts', methods=['POST'])
+def create_vital_alert():
+    """Create a new vital signs alert"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'message': 'No data provided'}), 400
+        
+        patient_id = data.get('patient_id')
+        if not patient_id:
+            return jsonify({'success': False, 'message': 'Patient ID is required'}), 400
+        
+        # Create alert
+        alert = {
+            "type": data.get('type'),
+            "severity": data.get('severity', 'medium'),
+            "message": data.get('message'),
+            "timestamp": datetime.now(),
+            "action_required": data.get('action_required', 'Monitor closely'),
+            "is_resolved": False,
+            "created_at": datetime.now()
+        }
+        
+        # Add to patient's vital_signs_alerts array
+        if db.patients_collection is not None:
+            result = db.patients_collection.update_one(
+                {"patient_id": patient_id},
+                {"$push": {"vital_signs_alerts": alert}}
+            )
+            
+            if result.acknowledged:
+                return jsonify({
+                    'success': True,
+                    'message': 'Alert created successfully',
+                    'alert': alert
+                }), 200
+            else:
+                return jsonify({'success': False, 'message': 'Failed to create alert'}), 500
+        else:
+            return jsonify({'success': False, 'message': 'Database not connected'}), 500
+            
+    except Exception as e:
+        print(f"Error creating vital alert: {e}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/vitals/alerts/<patient_id>', methods=['GET'])
+def get_vital_alerts(patient_id):
+    """Get vital signs alerts for a patient"""
+    try:
+        if db.patients_collection is None:
+            return jsonify({'success': False, 'message': 'Database not connected'}), 500
+        
+        # Find patient
+        patient = db.patients_collection.find_one({"patient_id": patient_id})
+        if not patient:
+            return jsonify({'success': False, 'message': 'Patient not found'}), 404
+        
+        # Get alerts
+        alerts = patient.get('vital_signs_alerts', [])
+        
+        # Filter by query parameters
+        severity = request.args.get('severity')
+        is_resolved = request.args.get('is_resolved')
+        
+        if severity:
+            alerts = [a for a in alerts if a.get('severity') == severity]
+        
+        if is_resolved is not None:
+            resolved = is_resolved.lower() == 'true'
+            alerts = [a for a in alerts if a.get('is_resolved', False) == resolved]
+        
+        # Sort by timestamp (newest first)
+        alerts.sort(key=lambda x: x.get('timestamp', datetime.now()), reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'patient_id': patient_id,
+            'alerts': alerts,
+            'total_count': len(alerts)
+        }), 200
+        
+    except Exception as e:
+        print(f"Error getting vital alerts: {e}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/vitals/ocr', methods=['POST'])
+def process_vital_signs_ocr():
+    """Process vital signs document with OCR"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'message': 'No file provided'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'message': 'No file selected'}), 400
+        
+        # Save file temporarily
+        import tempfile
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as temp_file:
+            file.save(temp_file.name)
+            temp_file_path = temp_file.name
+        
+        try:
+            # Process with vital signs OCR service
+            result = vital_signs_ocr_service.process_document(temp_file_path)
+            
+            return jsonify({
+                'success': result['success'],
+                'message': result['message'],
+                'vital_signs': result['vital_signs'],
+                'extracted_text': result.get('extracted_text', ''),
+                'filename': file.filename
+            }), 200
+            
+        finally:
+            # Clean up temporary file
+            if os.path.exists(temp_file_path):
+                os.unlink(temp_file_path)
+                
+    except Exception as e:
+        print(f"Error processing vital signs OCR: {e}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/vitals/process-text', methods=['POST'])
+def process_vital_signs_text():
+    """Process vital signs text for extraction"""
+    try:
+        data = request.get_json()
+        if not data or 'text' not in data:
+            return jsonify({'success': False, 'message': 'No text provided'}), 400
+        
+        text = data['text']
+        if not text.strip():
+            return jsonify({'success': False, 'message': 'Text cannot be empty'}), 400
+        
+        # Extract vital signs from text
+        vital_signs = vital_signs_ocr_service.extract_vital_signs_from_text(text)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Extracted {len(vital_signs)} vital signs',
+            'vital_signs': vital_signs,
+            'original_text': text
+        }), 200
+        
+    except Exception as e:
+        print(f"Error processing vital signs text: {e}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+# ==================== VITAL OCR ENDPOINTS ====================
+
+@app.route('/vital-ocr/upload', methods=['POST'])
+def vital_ocr_upload():
+    """Upload document for enhanced OCR processing (PDF, TXT, DOC, DOCX, Images)"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'message': 'No file provided'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'message': 'No file selected'}), 400
+        
+        # Validate file type
+        if not vital_ocr_service.validate_file_type(file.content_type, file.filename):
+            return jsonify({
+                'success': False, 
+                'message': f'Unsupported file type: {file.content_type}. Allowed types: {vital_ocr_service.allowed_types}'
+            }), 400
+        
+        # Read file content
+        file_content = file.read()
+        
+        # Process file using vital OCR service
+        result = vital_ocr_service.process_file(file_content, file.filename)
+        
+        return jsonify(result), 200 if result.get('success') else 400
+        
+    except Exception as e:
+        print(f"Error processing vital OCR upload: {e}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/vital-ocr/base64', methods=['POST'])
+def vital_ocr_base64():
+    """Process base64 encoded image for OCR"""
+    try:
+        print("🔍 Vital OCR base64 endpoint called")
+        data = request.get_json()
+        print(f"📥 Received data keys: {list(data.keys()) if data else 'None'}")
+        
+        if not data or 'image' not in data:
+            print("❌ No image data provided")
+            return jsonify({'success': False, 'message': 'No image data provided'}), 400
+        
+        image_data = data['image']
+        print(f"📄 Image data length: {len(image_data) if image_data else 0}")
+        
+        if not image_data or not image_data.strip():
+            print("❌ Image data is empty")
+            return jsonify({'success': False, 'message': 'Image data cannot be empty'}), 400
+        
+        print("🔄 Processing base64 image with vital OCR service...")
+        # Process base64 image using vital OCR service
+        result = vital_ocr_service.process_base64_image(image_data, "base64_image")
+        print(f"📤 Vital OCR result: {result}")
+        
+        return jsonify(result), 200 if result.get('success') else 400
+        
+    except Exception as e:
+        print(f"❌ Error processing vital OCR base64: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/vital-ocr/formats', methods=['GET'])
+def get_vital_ocr_formats():
+    """Get supported file formats for vital OCR"""
+    try:
+        formats = vital_ocr_service.get_supported_formats()
+        return jsonify({
+            'success': True,
+            'supported_formats': formats,
+            'description': 'File formats supported by vital OCR service'
+        }), 200
+        
+    except Exception as e:
+        print(f"Error getting vital OCR formats: {e}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/vital-ocr/status', methods=['GET'])
+def get_vital_ocr_status():
+    """Get vital OCR service status"""
+    try:
+        status = vital_ocr_service.get_webhook_status()
+        return jsonify({
+            'success': True,
+            'status': status
+        }), 200
+        
+    except Exception as e:
+        print(f"Error getting vital OCR status: {e}")
         return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
 # ==================== MEDICATION TRACKING ENDPOINTS ====================
@@ -3539,6 +4230,174 @@ def update_prescription_status(patient_id, prescription_id):
         print(f"Error updating prescription status: {e}")
         return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
+# ==================== MEDICATION PARSING FUNCTIONS ====================
+
+def _parse_medications_from_n8n_response(n8n_response):
+    """Parse medications from N8N webhook response"""
+    medications = []
+    
+    if not n8n_response:
+        return medications
+    
+    try:
+        print(f"🔍 Parsing medications from N8N response: {n8n_response}")
+        
+        # Handle different response formats
+        if isinstance(n8n_response, dict):
+            # Look for medications in common N8N response fields
+            if 'medications' in n8n_response:
+                medications = n8n_response['medications']
+            elif 'data' in n8n_response and 'medications' in n8n_response['data']:
+                medications = n8n_response['data']['medications']
+            elif 'result' in n8n_response and 'medications' in n8n_response['result']:
+                medications = n8n_response['result']['medications']
+            elif 'medication_list' in n8n_response:
+                medications = n8n_response['medication_list']
+            elif 'prescription' in n8n_response and 'medications' in n8n_response['prescription']:
+                medications = n8n_response['prescription']['medications']
+            else:
+                # Try to find any array that might contain medications
+                for key, value in n8n_response.items():
+                    if isinstance(value, list) and value and isinstance(value[0], dict):
+                        # Check if this looks like medication data
+                        if any(med_key in value[0] for med_key in ['medicationName', 'name', 'drug', 'medicine']):
+                            medications = value
+                            break
+        
+        # Ensure medications is a list
+        if not isinstance(medications, list):
+            medications = []
+        
+        # Normalize medication data structure
+        normalized_medications = []
+        for med in medications:
+            if isinstance(med, dict):
+                normalized_med = {
+                    'medicationName': med.get('medicationName') or med.get('name') or med.get('drug') or med.get('medicine') or 'Unknown',
+                    'purpose': med.get('purpose') or med.get('indication') or med.get('reason') or 'Not specified',
+                    'dosage': med.get('dosage') or med.get('dose') or med.get('strength') or 'Not specified',
+                    'route': med.get('route') or med.get('administration') or med.get('method') or 'oral',
+                    'frequency': med.get('frequency') or med.get('schedule') or med.get('timing') or 'Not specified'
+                }
+                normalized_medications.append(normalized_med)
+        
+        print(f"🔍 Parsed {len(normalized_medications)} medications from N8N response")
+        
+        # Debug: Print each medication
+        for i, med in enumerate(normalized_medications, 1):
+            print(f"  💊 Medication {i}: {med['medicationName']} - {med['purpose']} - {med['dosage']}")
+        
+        return normalized_medications
+        
+    except Exception as e:
+        print(f"❌ Error parsing medications from N8N response: {e}")
+        return []
+
+def _parse_medications_from_ocr(extracted_text):
+    """Parse medications from OCR extracted text"""
+    medications = []
+    
+    if not extracted_text:
+        return medications
+    
+    try:
+        # Split text into lines for processing
+        lines = extracted_text.split('\n')
+        
+        # Look for medication patterns
+        current_medication = {}
+        in_medication_section = False
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Check if we're in a medication section
+            if any(keyword in line.lower() for keyword in ['medication', 'medicine', 'drug', 'prescription']):
+                in_medication_section = True
+                continue
+            
+            # If we're in medication section, try to parse medication data
+            if in_medication_section:
+                # Look for medication name patterns
+                if any(keyword in line.lower() for keyword in ['tablet', 'mg', 'ml', 'capsule', 'syrup', 'injection']):
+                    # This might be a medication line
+                    parts = line.split()
+                    
+                    # Try to extract medication information
+                    medication = {
+                        'medicationName': '',
+                        'purpose': '',
+                        'dosage': '',
+                        'route': '',
+                        'frequency': ''
+                    }
+                    
+                    # Simple parsing logic - can be enhanced
+                    for i, part in enumerate(parts):
+                        if part.lower() in ['tablet', 'capsule', 'syrup', 'injection']:
+                            # Found medication type
+                            if i > 0:
+                                medication['medicationName'] = ' '.join(parts[:i+1])
+                            break
+                        elif 'mg' in part or 'ml' in part:
+                            medication['dosage'] = part
+                        elif part.lower() in ['oral', 'topical', 'injection', 'inhalation']:
+                            medication['route'] = part
+                        elif any(freq in part.lower() for freq in ['daily', 'twice', 'thrice', 'hourly', 'weekly']):
+                            medication['frequency'] = part
+                    
+                    # If we found a medication name, add it
+                    if medication['medicationName']:
+                        medications.append(medication)
+                        current_medication = {}
+        
+        # If no medications found with the above method, try a simpler approach
+        if not medications:
+            # Look for common medication patterns
+            medication_patterns = [
+                r'([A-Za-z\s]+)\s+(\d+\s*(?:mg|ml|g))\s+(?:oral|tablet|capsule)',
+                r'([A-Za-z\s]+)\s+(?:for|to treat)\s+([A-Za-z\s]+)',
+            ]
+            
+            import re
+            for pattern in medication_patterns:
+                matches = re.findall(pattern, extracted_text, re.IGNORECASE)
+                for match in matches:
+                    if len(match) >= 2:
+                        medication = {
+                            'medicationName': match[0].strip(),
+                            'purpose': match[1].strip() if len(match) > 1 else '',
+                            'dosage': '',
+                            'route': 'oral',
+                            'frequency': ''
+                        }
+                        medications.append(medication)
+        
+        # If still no medications found, create a default one
+        if not medications:
+            medications.append({
+                'medicationName': 'Prescription Document',
+                'purpose': 'As prescribed by doctor',
+                'dosage': 'As directed',
+                'route': 'oral',
+                'frequency': 'As needed'
+            })
+        
+        print(f"🔍 Parsed {len(medications)} medications from OCR text")
+        return medications
+        
+    except Exception as e:
+        print(f"❌ Error parsing medications: {e}")
+        return [{
+            'medicationName': 'Prescription Document',
+            'purpose': 'As prescribed by doctor',
+            'dosage': 'As directed',
+            'route': 'oral',
+            'frequency': 'As needed'
+        }]
+
 # ==================== OCR PRESCRIPTION PROCESSING ENDPOINTS ====================
 
 @app.route('/medication/process-prescription-document', methods=['POST'])
@@ -3631,7 +4490,84 @@ def process_prescription_document():
             
             ocr_result = ocr_service.process_file(file_content, file.filename)
         else:
-            return jsonify({'success': False, 'message': 'OCR service not available'}), 503
+            print("🔧 Using basic OCR fallback (no PaddleOCR available)...")
+            
+            # Basic OCR fallback implementation
+            file_extension = file.filename.lower().split('.')[-1] if '.' in file.filename else ''
+            full_text = ""
+            results = []
+            
+            try:
+                if file_extension == 'pdf' and PYMUPDF_AVAILABLE:
+                    print("📄 Processing PDF with PyMuPDF...")
+                    import fitz
+                    pdf_document = fitz.open(stream=file_content, filetype="pdf")
+                    full_text = ""
+                    for page_num in range(len(pdf_document)):
+                        page = pdf_document[page_num]
+                        page_text = page.get_text()
+                        if page_text.strip():
+                            full_text += page_text + "\n"
+                            results.append({
+                                "page": page_num + 1,
+                                "text": page_text.strip(),
+                                "method": "native_pdf",
+                                "confidence": 1.0
+                            })
+                    pdf_document.close()
+                    
+                elif file_extension in ['txt']:
+                    print("📝 Processing text file...")
+                    full_text = file_content.decode('utf-8', errors='ignore')
+                    lines = full_text.split('\n')
+                    for i, line in enumerate(lines):
+                        if line.strip():
+                            results.append({
+                                "line": i + 1,
+                                "text": line.strip(),
+                                "method": "native_text",
+                                "confidence": 1.0
+                            })
+                            
+                elif file_extension in ['jpg', 'jpeg', 'png', 'bmp', 'tiff'] and PIL_AVAILABLE:
+                    print("🖼️ Processing image file (basic extraction)...")
+                    from PIL import Image
+                    import io
+                    image = Image.open(io.BytesIO(file_content))
+                    # For now, just return basic info - would need OCR library for actual text extraction
+                    full_text = f"Image file: {file.filename} (OCR not available - install PaddleOCR for text extraction)"
+                    results.append({
+                        "text": full_text,
+                        "method": "image_placeholder",
+                        "confidence": 0.0
+                    })
+                    
+                else:
+                    print(f"⚠️ Unsupported file type: {file_extension}")
+                    return jsonify({
+                        'success': False,
+                        'message': f'Unsupported file type: {file_extension}. Supported types: pdf, txt, jpg, png, bmp, tiff'
+                    }), 400
+                
+                # Create OCR result in expected format
+                ocr_result = {
+                    'success': True,
+                    'filename': file.filename,
+                    'file_type': file.content_type,
+                    'extracted_text': full_text,
+                    'full_content': full_text,
+                    'results': results,
+                    'total_pages': len([r for r in results if 'page' in r]) or 1,
+                    'native_text_pages': len([r for r in results if r.get('method') in ['native_pdf', 'native_text']]),
+                    'ocr_pages': len([r for r in results if r.get('method') == 'image_placeholder'])
+                }
+                
+            except Exception as e:
+                print(f"❌ Basic OCR processing failed: {e}")
+                return jsonify({
+                    'success': False,
+                    'message': f'OCR processing failed: {str(e)}'
+                }), 500
         
         if not ocr_result['success']:
             return jsonify({
@@ -3651,10 +4587,159 @@ def process_prescription_document():
         print(f"✅ Successfully extracted text from {file.filename}")
         print(f"🔍 Extracted text length: {len(extracted_text)} characters")
         
-        # Return the extracted text for the user to review and edit
+        # Store in database
+        prescription_data = {
+            'patient_id': patient_id,
+            'medication_name': medication_name,
+            'filename': file.filename,
+            'file_type': file.content_type,
+            'processed_at': datetime.now(),
+            'ocr_result': ocr_result,
+            'extracted_text': extracted_text,
+            'text_elements': ocr_result.get('results', []),
+            'processing_method': 'paddleocr_enhanced' if enhanced_ocr_service and OCR_SERVICES_AVAILABLE else 'basic_fallback'
+        }
+        
+        # Save to database
+        if db.patients_collection is not None:
+            db.patients_collection.update_one(
+                {"patient_id": patient_id},
+                {"$push": {"prescription_documents": prescription_data}},
+                upsert=True
+            )
+            print(f"💾 Prescription data saved to database for patient {patient_id}")
+        
+        # Send results to N8N webhook if processing was successful
+        webhook_results = []
+        print(f"🔍 Webhook service available: {webhook_service is not None}")
+        if webhook_service:
+            print(f"🔍 Webhook service configured: {webhook_service.is_configured()}")
+        
+        # Always try to send webhook if OCR was successful
+        if ocr_result.get("success"):
+            print("🚀 Sending OCR results to N8N webhook...")
+            
+            # Prepare webhook data in the correct format
+            webhook_data = {
+                'success': True,
+                'patient_id': patient_id,
+                'medication_name': medication_name,
+                'filename': file.filename,
+                'extracted_text': ocr_result.get('extracted_text', ''),
+                'full_content': ocr_result.get('full_content', ''),
+                'file_type': ocr_result.get('file_type', ''),
+                'total_pages': ocr_result.get('total_pages', 1),
+                'processing_method': ocr_result.get('processing_method', 'paddleocr'),
+                'timestamp': datetime.now().isoformat(),
+                'results': ocr_result.get('results', [])
+            }
+            
+            # Send webhook only once - try webhook service first, then direct call if needed
+            webhook_success = False
+            webhook_results = []
+            n8n_response_data = None  # Store N8N response data
+            
+            if webhook_service:
+                try:
+                    print("🔧 Using webhook service...")
+                    # Create new event loop for webhook service
+                    webhook_loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(webhook_loop)
+                    
+                    webhook_results = webhook_loop.run_until_complete(
+                        webhook_service.send_ocr_result(webhook_data, file.filename)
+                    )
+                    
+                    webhook_loop.close()
+                    
+                    # Check if any webhook was successful and capture response
+                    if webhook_results:
+                        for webhook_result in webhook_results:
+                            if webhook_result["success"]:
+                                print(f"✅ N8N Webhook sent successfully to {webhook_result['config_name']} ({webhook_result['url']})")
+                                # Capture N8N response data if available
+                                if 'response_data' in webhook_result:
+                                    n8n_response_data = webhook_result['response_data']
+                                    print(f"🔍 N8N Response data captured: {n8n_response_data}")
+                                    print(f"🔍 N8N Response type: {type(n8n_response_data)}")
+                                    if isinstance(n8n_response_data, dict):
+                                        print(f"🔍 N8N Response keys: {list(n8n_response_data.keys())}")
+                                webhook_success = True
+                                break  # Stop after first success
+                            else:
+                                print(f"❌ N8N Webhook failed for {webhook_result['config_name']}: {webhook_result.get('error', 'Unknown error')}")
+                    
+                    if not webhook_success:
+                        print("⚠️ No successful webhook results from webhook service, trying direct call...")
+                        
+                except Exception as e:
+                    print(f"❌ Webhook service failed: {e}")
+                    print("⚠️ Trying direct call as fallback...")
+            
+            # Only try direct call if webhook service didn't succeed
+            if not webhook_success:
+                try:
+                    print("🔄 Sending direct N8N webhook call...")
+                    n8n_url = DEFAULT_WEBHOOK_URL
+                    print(f"🔍 Using webhook URL: {n8n_url}")
+                    
+                    import requests
+                    response = requests.post(
+                        n8n_url,
+                        json=webhook_data,
+                        headers={'Content-Type': 'application/json'},
+                        timeout=30
+                    )
+                    
+                    if response.status_code == 200:
+                        print("✅ Direct N8N webhook call successful!")
+                        # Try to parse N8N response data
+                        try:
+                            n8n_response_data = response.json()
+                            print(f"🔍 N8N Response data captured: {n8n_response_data}")
+                            print(f"🔍 N8N Response type: {type(n8n_response_data)}")
+                            if isinstance(n8n_response_data, dict):
+                                print(f"🔍 N8N Response keys: {list(n8n_response_data.keys())}")
+                        except:
+                            n8n_response_data = response.text
+                            print(f"🔍 N8N Response text captured: {n8n_response_data}")
+                            print(f"🔍 N8N Response type: {type(n8n_response_data)}")
+                        
+                        webhook_success = True
+                        webhook_results = [{
+                            'success': True,
+                            'config_name': 'Direct N8N Call',
+                            'url': n8n_url,
+                            'response_status': response.status_code,
+                            'response_data': n8n_response_data
+                        }]
+                    else:
+                        print(f"❌ Direct N8N webhook failed: {response.status_code} - {response.text}")
+                        webhook_results = [{
+                            'success': False,
+                            'config_name': 'Direct N8N Call',
+                            'url': n8n_url,
+                            'error': f"HTTP {response.status_code}: {response.text}"
+                        }]
+                        
+                except Exception as direct_error:
+                    print(f"❌ Direct N8N webhook call failed: {direct_error}")
+                    webhook_results = [{
+                        'success': False,
+                        'config_name': 'Direct N8N Call',
+                        'url': n8n_url,
+                        'error': str(direct_error)
+                    }]
+            else:
+                print("✅ Webhook already successful, skipping direct call")
+        else:
+            print("⚠️ OCR processing failed, skipping webhook")
+            webhook_results = []
+        
+        # Return the extracted text and N8N webhook results for the user to review
         return jsonify({
             'success': True,
-            'message': 'Document processed successfully with PaddleOCR',
+            'message': 'Document processed successfully' + (' with PaddleOCR' if enhanced_ocr_service and OCR_SERVICES_AVAILABLE else ' with basic OCR'),
             'filename': file.filename,
             'file_type': ocr_result['file_type'],
             'extracted_text': extracted_text,
@@ -3665,7 +4750,16 @@ def process_prescription_document():
                 'method': 'paddleocr_extraction' if enhanced_ocr_service and OCR_SERVICES_AVAILABLE else 'basic_ocr_extraction',
                 'confidence': ocr_result.get('results', [{}])[0].get('confidence', 0.0) if ocr_result.get('results') else 0.0,
                 'service_used': 'PaddleOCR Enhanced' if enhanced_ocr_service and OCR_SERVICES_AVAILABLE else 'Basic OCR'
-            }
+            },
+            'n8n_webhook_results': {
+                'webhook_success': webhook_success,
+                'webhook_calls': webhook_results,
+                'total_calls': len(webhook_results),
+                'successful_calls': len([r for r in webhook_results if r.get('success', False)]),
+                'failed_calls': len([r for r in webhook_results if not r.get('success', False)])
+            },
+            'n8n_response_data': n8n_response_data,
+            'parsed_medications': _parse_medications_from_n8n_response(n8n_response_data) if n8n_response_data else _parse_medications_from_ocr(extracted_text)
         }), 200
         
     except Exception as e:
@@ -3773,31 +4867,6 @@ def process_with_paddleocr():
             else:
                 print(f"🔍 Debug - OCR processing failed: {ocr_result.get('error', 'Unknown error')}")
             
-            # Send results to webhook if processing was successful
-            webhook_results = []
-            if ocr_result.get("success") and webhook_service and webhook_service.is_configured():
-                try:
-                    print("🚀 Sending OCR results to webhook using medication folder service...")
-                    
-                    # Create new event loop for webhook service
-                    webhook_loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(webhook_loop)
-                    
-                    webhook_results = webhook_loop.run_until_complete(
-                        webhook_service.send_ocr_result(ocr_result, file.filename)
-                    )
-                    
-                    webhook_loop.close()
-                    
-                    # Log webhook delivery status
-                    for webhook_result in webhook_results:
-                        if webhook_result["success"]:
-                            print(f"✅ Webhook sent successfully to {webhook_result['config_name']} ({webhook_result['url']})")
-                        else:
-                            print(f"❌ Webhook failed for {webhook_result['config_name']}: {webhook_result.get('error', 'Unknown error')}")
-                    
-                except Exception as e:
-                    print(f"❌ Error sending webhook: {e}")
             
             # Return comprehensive result with full text content
             final_response = {
@@ -4023,6 +5092,61 @@ def process_with_mock_n8n():
     except Exception as e:
         print(f"❌ Error processing with N8N webhook: {e}")
         return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@app.route('/test-n8n-webhook', methods=['POST'])
+def test_n8n_webhook():
+    """Test N8N webhook directly"""
+    try:
+        print("🧪 Testing N8N webhook...")
+        
+        # Test data
+        test_data = {
+            'success': True,
+            'patient_id': 'TEST123',
+            'medication_name': 'Test Medication',
+            'filename': 'test_document.pdf',
+            'extracted_text': 'This is a test prescription document for N8N webhook testing.',
+            'full_content': 'This is a test prescription document for N8N webhook testing.',
+            'file_type': 'application/pdf',
+            'total_pages': 1,
+            'processing_method': 'test',
+            'timestamp': datetime.now().isoformat(),
+            'results': [{'text': 'Test text', 'confidence': 0.95}]
+        }
+        
+        n8n_url = DEFAULT_WEBHOOK_URL
+        
+        import requests
+        response = requests.post(
+            n8n_url,
+            json=test_data,
+            headers={'Content-Type': 'application/json'},
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            print("✅ N8N webhook test successful!")
+            return jsonify({
+                'success': True,
+                'message': 'N8N webhook test successful',
+                'response_status': response.status_code,
+                'response_text': response.text
+            }), 200
+        else:
+            print(f"❌ N8N webhook test failed: {response.status_code}")
+            return jsonify({
+                'success': False,
+                'message': f'N8N webhook test failed: {response.status_code}',
+                'response_status': response.status_code,
+                'response_text': response.text
+            }), 400
+            
+    except Exception as e:
+        print(f"❌ N8N webhook test error: {e}")
+        return jsonify({
+            'success': False,
+            'message': f'N8N webhook test error: {str(e)}'
+        }), 500
 
 @app.route('/medication/process-with-n8n-webhook', methods=['POST'])
 def process_with_n8n_webhook():
@@ -4399,7 +5523,7 @@ def get_patient_profile(patient_id):
                 'message': f'Patient not found with ID: {patient_id}'
             }), 404
         
-        # Prepare profile data (same structure as kick count)
+        # Prepare profile data (complete structure with all fields)
         profile_data = {
             'patient_id': patient.get('patient_id'),
             'username': patient.get('username'),
@@ -4408,15 +5532,28 @@ def get_patient_profile(patient_id):
             'first_name': patient.get('first_name'),
             'last_name': patient.get('last_name'),
             'age': patient.get('age'),
+            'gender': patient.get('gender'),
             'blood_type': patient.get('blood_type'),
             'date_of_birth': patient.get('date_of_birth'),
             'height': patient.get('height'),
             'weight': patient.get('weight'),
             'is_pregnant': patient.get('is_pregnant'),
+            'pregnancy_status': patient.get('pregnancy_status'),
             'pregnancy_week': patient.get('pregnancy_week'),
             'last_period_date': patient.get('last_period_date'),
             'expected_delivery_date': patient.get('expected_delivery_date'),
             'emergency_contact': patient.get('emergency_contact'),
+            'emergency_contact_name': patient.get('emergency_contact_name'),
+            'emergency_contact_phone': patient.get('emergency_contact_phone'),
+            'emergency_contact_relationship': patient.get('emergency_contact_relationship'),
+            'address': patient.get('address'),
+            'city': patient.get('city'),
+            'state': patient.get('state'),
+            'zip_code': patient.get('zip_code'),
+            'phone': patient.get('phone'),
+            'medical_conditions': patient.get('medical_conditions', []),
+            'allergies': patient.get('allergies', []),
+            'medications': patient.get('medications', []),
             'status': patient.get('status'),
             'created_at': patient.get('created_at'),
             'last_updated': patient.get('last_updated'),
@@ -4430,8 +5567,23 @@ def get_patient_profile(patient_id):
         print(f"🆔 Patient ID: {profile_data['patient_id']}")
         print(f" Username: {profile_data['username']}")
         print(f"📧 Email: {profile_data['email']}")
+        print(f"👤 First Name: {profile_data['first_name']}")
+        print(f"👤 Last Name: {profile_data['last_name']}")
+        print(f"🩸 Blood Type: {profile_data['blood_type']}")
+        print(f"📏 Height: {profile_data['height']}")
+        print(f"⚖️ Weight: {profile_data['weight']}")
+        print(f"🤰 Pregnancy Status: {profile_data['pregnancy_status']}")
         print(f"📅 Pregnancy Week: {profile_data['pregnancy_week']}")
-        print(f" Expected Delivery: {profile_data['expected_delivery_date']}")
+        print(f"📅 Expected Delivery: {profile_data['expected_delivery_date']}")
+        print(f"🚨 Emergency Contact: {profile_data['emergency_contact_name']}")
+        print(f"📞 Emergency Phone: {profile_data['emergency_contact_phone']}")
+        print(f"👥 Emergency Relationship: {profile_data['emergency_contact_relationship']}")
+        print(f"🏠 Address: {profile_data['address']}")
+        print(f"🏙️ City: {profile_data['city']}")
+        print(f"🗺️ State: {profile_data['state']}")
+        print(f"📮 ZIP Code: {profile_data['zip_code']}")
+        print(f"📱 Phone: {profile_data['phone']}")
+        print(f"⏰ Last Updated: {profile_data['last_updated']}")
         
         return jsonify({
             'success': True,

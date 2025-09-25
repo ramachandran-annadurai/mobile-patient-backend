@@ -11,15 +11,16 @@ class PatientKickCounterScreen extends StatefulWidget {
   final String email;
 
   const PatientKickCounterScreen({
-    Key? key,
+    super.key,
     required this.userId,
     required this.userRole,
     required this.username,
     required this.email,
-  }) : super(key: key);
+  });
 
   @override
-  State<PatientKickCounterScreen> createState() => _PatientKickCounterScreenState();
+  State<PatientKickCounterScreen> createState() =>
+      _PatientKickCounterScreenState();
 }
 
 class _PatientKickCounterScreenState extends State<PatientKickCounterScreen> {
@@ -93,10 +94,11 @@ class _PatientKickCounterScreenState extends State<PatientKickCounterScreen> {
       // Get Patient ID from user info for precise patient linking
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userInfo = await authProvider.getCurrentUserInfo();
-      
+
       final String? patientId = userInfo['userId'];
       if (patientId == null) {
-        throw Exception('Patient ID not found. Please ensure you are logged in.');
+        throw Exception(
+            'Patient ID not found. Please ensure you are logged in.');
       }
 
       final kickData = {
@@ -107,7 +109,10 @@ class _PatientKickCounterScreenState extends State<PatientKickCounterScreen> {
         'sessionDuration': _getSessionDuration().inSeconds,
         'sessionStartTime': _sessionStartTime?.toIso8601String(),
         'sessionEndTime': DateTime.now().toIso8601String(),
-        'averageKicksPerMinute': _kickCount / (_getSessionDuration().inMinutes > 0 ? _getSessionDuration().inMinutes : 1),
+        'averageKicksPerMinute': _kickCount /
+            (_getSessionDuration().inMinutes > 0
+                ? _getSessionDuration().inMinutes
+                : 1),
         'notes': 'Kick counting session',
         'timestamp': DateTime.now().toIso8601String(),
       };
@@ -126,7 +131,7 @@ class _PatientKickCounterScreenState extends State<PatientKickCounterScreen> {
 
       // Save kick session data
       final response = await ApiService().saveKickSession(kickData);
-      
+
       if (response['success'] == true) {
         // Add to local kick logs
         setState(() {
@@ -138,7 +143,7 @@ class _PatientKickCounterScreenState extends State<PatientKickCounterScreen> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Kick session saved successfully!'),
             backgroundColor: Colors.green,
           ),
@@ -167,14 +172,15 @@ class _PatientKickCounterScreenState extends State<PatientKickCounterScreen> {
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userInfo = await authProvider.getCurrentUserInfo();
-      
+
       final String? patientId = userInfo['userId'];
       if (patientId != null) {
         // Load kick history from API
         final response = await ApiService().getKickHistory(patientId);
         if (response['success'] == true) {
           setState(() {
-            _kickLogs = List<Map<String, dynamic>>.from(response['kick_logs'] ?? []);
+            _kickLogs =
+                List<Map<String, dynamic>>.from(response['kick_logs'] ?? []);
           });
         }
       }
@@ -186,10 +192,10 @@ class _PatientKickCounterScreenState extends State<PatientKickCounterScreen> {
   @override
   Widget build(BuildContext context) {
     final sessionDuration = _getSessionDuration();
-    
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Kick Counter'),
+        title: const Text('Kick Counter'),
         backgroundColor: Colors.purple,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -201,7 +207,7 @@ class _PatientKickCounterScreenState extends State<PatientKickCounterScreen> {
             // Instructions
             Container(
               width: double.infinity,
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.purple.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
@@ -216,9 +222,9 @@ class _PatientKickCounterScreenState extends State<PatientKickCounterScreen> {
                 textAlign: TextAlign.center,
               ),
             ),
-            
-            SizedBox(height: 30),
-            
+
+            const SizedBox(height: 30),
+
             // Timer Display
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -229,19 +235,25 @@ class _PatientKickCounterScreenState extends State<PatientKickCounterScreen> {
                 ),
                 _buildTimeBox(
                   'Minutes',
-                  sessionDuration.inMinutes.remainder(60).toString().padLeft(2, '0'),
+                  sessionDuration.inMinutes
+                      .remainder(60)
+                      .toString()
+                      .padLeft(2, '0'),
                 ),
                 _buildTimeBox(
                   'Seconds',
-                  sessionDuration.inSeconds.remainder(60).toString().padLeft(2, '0'),
+                  sessionDuration.inSeconds
+                      .remainder(60)
+                      .toString()
+                      .padLeft(2, '0'),
                 ),
               ],
             ),
-            
-            SizedBox(height: 30),
-            
+
+            const SizedBox(height: 30),
+
             // Log Kick Button
-            Container(
+            SizedBox(
               width: double.infinity,
               height: 60,
               child: ElevatedButton(
@@ -255,14 +267,14 @@ class _PatientKickCounterScreenState extends State<PatientKickCounterScreen> {
                 ),
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
+                    gradient: const LinearGradient(
                       colors: [Colors.pink, Colors.purple],
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                     ),
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  child: Center(
+                  child: const Center(
                     child: Text(
                       'Log Kick',
                       style: TextStyle(
@@ -275,9 +287,9 @@ class _PatientKickCounterScreenState extends State<PatientKickCounterScreen> {
                 ),
               ),
             ),
-            
-            SizedBox(height: 20),
-            
+
+            const SizedBox(height: 20),
+
             // Kick Count Display
             Text(
               'Kick Count: $_kickCount',
@@ -287,9 +299,9 @@ class _PatientKickCounterScreenState extends State<PatientKickCounterScreen> {
                 color: Colors.purple[800],
               ),
             ),
-            
-            SizedBox(height: 30),
-            
+
+            const SizedBox(height: 30),
+
             // Session Control Buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -299,41 +311,44 @@ class _PatientKickCounterScreenState extends State<PatientKickCounterScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
                   ),
-                  child: Text('Start Session'),
+                  child: const Text('Start Session'),
                 ),
                 ElevatedButton(
                   onPressed: _isSessionActive ? _stopSession : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
                   ),
-                  child: Text('Stop Session'),
+                  child: const Text('Stop Session'),
                 ),
                 ElevatedButton(
                   onPressed: _resetSession,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
                   ),
-                  child: Text('Reset'),
+                  child: const Text('Reset'),
                 ),
               ],
             ),
-            
-            SizedBox(height: 30),
-            
+
+            const SizedBox(height: 30),
+
             // Loading indicator
             if (_isLoading)
-              CircularProgressIndicator(
+              const CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.purple),
               ),
-            
-            SizedBox(height: 20),
-            
+
+            const SizedBox(height: 20),
+
             // Kick History
             if (_kickLogs.isNotEmpty) ...[
               Text(
@@ -344,7 +359,7 @@ class _PatientKickCounterScreenState extends State<PatientKickCounterScreen> {
                   color: Colors.purple[800],
                 ),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Expanded(
                 child: ListView.builder(
                   itemCount: _kickLogs.length,
@@ -352,16 +367,18 @@ class _PatientKickCounterScreenState extends State<PatientKickCounterScreen> {
                     final log = _kickLogs[index];
                     final timestamp = DateTime.tryParse(log['timestamp'] ?? '');
                     return Card(
-                      margin: EdgeInsets.symmetric(vertical: 4),
+                      margin: const EdgeInsets.symmetric(vertical: 4),
                       child: ListTile(
-                        leading: Icon(Icons.child_care, color: Colors.purple),
+                        leading:
+                            const Icon(Icons.child_care, color: Colors.purple),
                         title: Text('${log['kickCount']} kicks'),
                         subtitle: Text(
-                          timestamp != null 
-                            ? '${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')} - ${log['sessionDuration']} seconds'
-                            : 'Session completed',
+                          timestamp != null
+                              ? '${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')} - ${log['sessionDuration']} seconds'
+                              : 'Session completed',
                         ),
-                        trailing: Icon(Icons.check_circle, color: Colors.green),
+                        trailing:
+                            const Icon(Icons.check_circle, color: Colors.green),
                       ),
                     );
                   },
@@ -396,7 +413,7 @@ class _PatientKickCounterScreenState extends State<PatientKickCounterScreen> {
             ),
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(
           label,
           style: TextStyle(
@@ -408,4 +425,4 @@ class _PatientKickCounterScreenState extends State<PatientKickCounterScreen> {
       ],
     );
   }
-} 
+}

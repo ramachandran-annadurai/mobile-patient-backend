@@ -8,10 +8,12 @@ class MedicationDosageListScreen extends StatefulWidget {
   const MedicationDosageListScreen({super.key});
 
   @override
-  State<MedicationDosageListScreen> createState() => _MedicationDosageListScreenState();
+  State<MedicationDosageListScreen> createState() =>
+      _MedicationDosageListScreenState();
 }
 
-class _MedicationDosageListScreenState extends State<MedicationDosageListScreen> {
+class _MedicationDosageListScreenState
+    extends State<MedicationDosageListScreen> {
   bool _isLoading = true;
   String _errorMessage = '';
   List<dynamic> _upcomingDosages = [];
@@ -35,7 +37,7 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
 
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userInfo = await authProvider.getCurrentUserInfo();
-      
+
       if (userInfo['userId'] == null) {
         setState(() {
           _errorMessage = 'User not authenticated';
@@ -58,7 +60,8 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
         });
       } else {
         setState(() {
-          _errorMessage = result['message'] ?? 'Failed to load upcoming dosages';
+          _errorMessage =
+              result['message'] ?? 'Failed to load upcoming dosages';
           _isLoading = false;
         });
       }
@@ -84,14 +87,14 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
       final dateTime = DateTime.parse(isoTime);
       final now = DateTime.now();
       final difference = dateTime.difference(now);
-      
+
       if (difference.isNegative) {
         return 'Overdue';
       }
-      
+
       final hours = difference.inHours;
       final minutes = difference.inMinutes % 60;
-      
+
       if (hours > 0) {
         return '${hours}h ${minutes}m';
       } else {
@@ -137,7 +140,7 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.error, color: Colors.red, size: 64),
+                      const Icon(Icons.error, color: Colors.red, size: 64),
                       const SizedBox(height: 16),
                       Text(
                         _errorMessage,
@@ -167,21 +170,25 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
                               padding: const EdgeInsets.all(16),
                               child: Row(
                                 children: [
-                                  Icon(Icons.access_time, color: AppColors.primary),
+                                  const Icon(Icons.access_time,
+                                      color: AppColors.primary),
                                   const SizedBox(width: 12),
                                   Text(
                                     'Current Time: ${_formatTime(_currentTime)}',
-                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                   ),
                                 ],
                               ),
                             ),
                           ),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // Upcoming Dosages Section
                         if (_upcomingDosages.isNotEmpty) ...[
                           _buildSectionHeader(
@@ -191,10 +198,11 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
                             Colors.blue,
                           ),
                           const SizedBox(height: 8),
-                          ..._upcomingDosages.map((dosage) => _buildDosageCard(dosage)),
+                          ..._upcomingDosages
+                              .map((dosage) => _buildDosageCard(dosage)),
                           const SizedBox(height: 24),
                         ],
-                        
+
                         // Prescription Medications Section
                         if (_prescriptionMedications.isNotEmpty) ...[
                           _buildSectionHeader(
@@ -204,12 +212,14 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
                             Colors.green,
                           ),
                           const SizedBox(height: 8),
-                          ..._prescriptionMedications.map((med) => _buildPrescriptionCard(med)),
+                          ..._prescriptionMedications
+                              .map((med) => _buildPrescriptionCard(med)),
                           const SizedBox(height: 24),
                         ],
-                        
+
                         // Empty State
-                        if (_upcomingDosages.isEmpty && _prescriptionMedications.isEmpty)
+                        if (_upcomingDosages.isEmpty &&
+                            _prescriptionMedications.isEmpty)
                           Center(
                             child: Column(
                               children: [
@@ -245,7 +255,8 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
     );
   }
 
-  Widget _buildSectionHeader(String title, int count, IconData icon, Color color) {
+  Widget _buildSectionHeader(
+      String title, int count, IconData icon, Color color) {
     return Row(
       children: [
         Icon(icon, color: color, size: 24),
@@ -253,9 +264,9 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
         Text(
           title,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
         ),
         const Spacer(),
         Container(
@@ -281,7 +292,7 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
     final nextDoseTime = dosage['next_dose_time'] ?? '';
     final timeUntil = _getTimeUntil(nextDoseTime);
     final isOverdue = timeUntil == 'Overdue';
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -295,12 +306,13 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
                   child: Text(
                     dosage['medication_name'] ?? 'Unknown Medication',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: isOverdue ? Colors.red : Colors.green,
                     borderRadius: BorderRadius.circular(12),
@@ -317,7 +329,6 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
               ],
             ),
             const SizedBox(height: 8),
-            
             Row(
               children: [
                 Icon(Icons.schedule, size: 16, color: Colors.grey.shade600),
@@ -335,7 +346,6 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
                 ),
               ],
             ),
-            
             if (dosage['frequency']?.isNotEmpty == true) ...[
               const SizedBox(height: 4),
               Row(
@@ -349,7 +359,6 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
                 ],
               ),
             ],
-            
             if (dosage['special_instructions']?.isNotEmpty == true) ...[
               const SizedBox(height: 8),
               Container(
@@ -376,7 +385,6 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
                 ),
               ),
             ],
-            
             if (dosage['notes']?.isNotEmpty == true) ...[
               const SizedBox(height: 8),
               Text(
@@ -388,7 +396,6 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
                 ),
               ),
             ],
-            
             const SizedBox(height: 8),
             Row(
               children: [
@@ -419,17 +426,18 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
           children: [
             Row(
               children: [
-                Icon(Icons.medication, color: Colors.green, size: 20),
+                const Icon(Icons.medication, color: Colors.green, size: 20),
                 const SizedBox(width: 8),
                 Text(
                   medication['medication_name'] ?? 'Unknown Medication',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.green,
                     borderRadius: BorderRadius.circular(12),
@@ -446,7 +454,6 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
               ],
             ),
             const SizedBox(height: 12),
-            
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -459,7 +466,8 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.description, size: 16, color: Colors.green.shade700),
+                      Icon(Icons.description,
+                          size: 16, color: Colors.green.shade700),
                       const SizedBox(width: 8),
                       Text(
                         'Prescription Details:',
@@ -481,7 +489,6 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
                 ],
               ),
             ),
-            
             if (medication['notes']?.isNotEmpty == true) ...[
               const SizedBox(height: 8),
               Text(
@@ -493,7 +500,6 @@ class _MedicationDosageListScreenState extends State<MedicationDosageListScreen>
                 ),
               ),
             ],
-            
             const SizedBox(height: 8),
             Row(
               children: [

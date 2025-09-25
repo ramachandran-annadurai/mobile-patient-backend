@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR File Upload with Webhook - Chrome Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f8ff;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .section h2 {
+            color: #555;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="file"], input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .status {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .status.connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status.disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .webhook-info {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+        .webhook-info h3 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        .url-display {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: 1px solid #dee2e6;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+        .flow-diagram {
+            background-color: #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .flow-step {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .flow-arrow {
+            color: #007bff;
+            font-size: 20px;
+            margin: 0 10px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #007bff;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📄 OCR File Upload with Webhook Integration</h1>
+        
+        <div class="flow-diagram">
+            <h3>🔄 Upload Flow</h3>
+            <div class="flow-step">1. Select File</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step">2. Upload to OCR API</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step">3. Process with OCR</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step">4. Send to Webhook</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-step">5. Display Results</div>
+        </div>
+
+        <div class="webhook-info">
+            <h3>🔗 Webhook Configuration</h3>
+            <p><strong>Webhook URL:</strong></p>
+            <div class="url-display" id="webhookUrl">https://n8n.srv795087.hstgr.cloud/webhook/vital</div>
+            <p><strong>Status:</strong> <span id="webhookStatus">Checking...</span></p>
+        </div>
+
+        <div id="connectionStatus" class="status disconnected">
+            Checking API connection...
+        </div>
+
+        <div class="section">
+            <h2>📁 File Upload with Webhook</h2>
+            <div class="form-group">
+                <label for="fileInput">Select a file to upload (PDF, TXT, DOC, DOCX, or Image):</label>
+                <input type="file" id="fileInput" accept=".pdf,.txt,.doc,.docx,.jpg,.jpeg,.png,.gif,.bmp,.tiff">
+            </div>
+            
+            <div class="progress-bar" id="progressBar" style="display: none;">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            
+            <button onclick="uploadFileWithWebhook()" id="uploadBtn">Upload & Process with Webhook</button>
+            <button onclick="clearResults()">Clear Results</button>
+            
+            <div id="uploadResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>🔍 PaddleOCR Results & Webhook Status</h2>
+            <div id="ocrResults" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>📊 PaddleOCR Statistics</h2>
+            <div id="ocrStats" style="display: none;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div style="background-color: #e8f5e8; padding: 15px; border-radius: 8px; text-align: center;">
+                        <h3 style="margin: 0; color: #2e7d32;">📄 Total Text Blocks</h3>
+                        <p style="font-size: 24px; font-weight: bold; margin: 10px 0; color: #2e7d32;" id="totalTextBlocks">0</p>
+                    </div>
+                    <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center;">
+                        <h3 style="margin: 0; color: #1976d2;">🎯 Average Confidence</h3>
+                        <p style="font-size: 24px; font-weight: bold; margin: 10px 0; color: #1976d2;" id="avgConfidence">0%</p>
+                    </div>
+                    <div style="background-color: #f3e5f5; padding: 15px; border-radius: 8px; text-align: center;">
+                        <h3 style="margin: 0; color: #7b1fa2;">⏱️ Processing Time</h3>
+                        <p style="font-size: 24px; font-weight: bold; margin: 10px 0; color: #7b1fa2;" id="processingTime">0s</p>
+                    </div>
+                    <div style="background-color: #fff3cd; padding: 15px; border-radius: 8px; text-align: center;">
+                        <h3 style="margin: 0; color: #856404;">📏 Total Characters</h3>
+                        <p style="font-size: 24px; font-weight: bold; margin: 10px 0; color: #856404;" id="totalCharacters">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🧪 Test Webhook Directly</h2>
+            <p>Test the webhook endpoint directly with sample data:</p>
+            <button onclick="testWebhookDirectly()">Test Webhook Endpoint</button>
+            <div id="webhookTestResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Webhook Configuration Status</h2>
+            <button onclick="checkWebhookConfigs()">Check Webhook Configurations</button>
+            <div id="webhookConfigsResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        const WEBHOOK_URL = 'https://n8n.srv795087.hstgr.cloud/webhook/vital';
+        
+        // Check connection status on page load
+        window.onload = function() {
+            checkConnection();
+            checkWebhookStatus();
+        };
+
+        async function checkConnection() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                if (response.ok) {
+                    document.getElementById('connectionStatus').textContent = 'API Connected ✅';
+                    document.getElementById('connectionStatus').className = 'status connected';
+                } else {
+                    throw new Error('Server not responding');
+                }
+            } catch (error) {
+                document.getElementById('connectionStatus').textContent = 'API Disconnected ❌';
+                document.getElementById('connectionStatus').className = 'status disconnected';
+            }
+        }
+
+        async function checkWebhookStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/webhook/configs`);
+                if (response.ok) {
+                    const configs = await response.json();
+                    const n8nConfig = configs.find(config => config.name === 'Default n8n Webhook');
+                    if (n8nConfig && n8nConfig.enabled) {
+                        document.getElementById('webhookStatus').textContent = 'Webhook Enabled ✅';
+                    } else {
+                        document.getElementById('webhookStatus').textContent = 'Webhook Not Found ❌';
+                    }
+                } else {
+                    document.getElementById('webhookStatus').textContent = 'Error checking webhook status ❌';
+                }
+            } catch (error) {
+                document.getElementById('webhookStatus').textContent = 'Error checking webhook status ❌';
+            }
+        }
+
+        async function uploadFileWithWebhook() {
+            const fileInput = document.getElementById('fileInput');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            
+            if (!fileInput.files[0]) {
+                showResult('uploadResult', 'Please select a file first.', 'error');
+                return;
+            }
+
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Processing...';
+            progressBar.style.display = 'block';
+            progressFill.style.width = '10%';
+
+            showResult('uploadResult', 'Starting file upload and OCR processing...', 'info');
+
+            try {
+                // Step 1: Upload file
+                progressFill.style.width = '30%';
+                showResult('uploadResult', 'Uploading file to OCR API...', 'info');
+
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+
+                const response = await fetch(`${API_BASE}/api/v1/ocr/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                progressFill.style.width = '70%';
+                showResult('uploadResult', 'Processing OCR results...', 'info');
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    progressFill.style.width = '100%';
+                    showResult('uploadResult', 'OCR processing completed successfully!', 'success');
+                    
+                    // Display OCR results
+                    displayOCRResults(result);
+                    
+                    // Check webhook delivery status
+                    if (result.webhook_delivery) {
+                        displayWebhookStatus(result.webhook_delivery);
+                    }
+                    
+                } else {
+                    showResult('uploadResult', `Error: ${result.detail || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showResult('uploadResult', `Network error: ${error.message}`, 'error');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload & Process with Webhook';
+                setTimeout(() => {
+                    progressBar.style.display = 'none';
+                    progressFill.style.width = '0%';
+                }, 2000);
+            }
+        }
+
+        function displayOCRResults(result) {
+            const ocrResults = document.getElementById('ocrResults');
+            
+            let resultsHTML = `
+                <div style="background-color: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <h3 style="margin-top: 0; color: #2e7d32;">📄 PaddleOCR Results</h3>
+                    <p><strong>Filename:</strong> ${result.filename || 'Unknown'}</p>
+                    <p><strong>Success:</strong> ${result.success ? '✅ Yes' : '❌ No'}</p>
+                    <p><strong>Text Count:</strong> ${result.text_count || 0} text blocks found</p>
+                    <p><strong>Processing Time:</strong> ${result.processing_time || 'Unknown'}</p>
+                </div>
+            `;
+            
+            if (result.results && result.results.length > 0) {
+                resultsHTML += `
+                    <div style="background-color: #f3e5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <h3 style="margin-top: 0; color: #7b1fa2;">🔍 Extracted Text Blocks</h3>
+                `;
+                
+                result.results.forEach((textBlock, index) => {
+                    const confidence = (textBlock.confidence * 100).toFixed(1);
+                    const confidenceColor = textBlock.confidence > 0.8 ? '#4caf50' : textBlock.confidence > 0.6 ? '#ff9800' : '#f44336';
+                    
+                    resultsHTML += `
+                        <div style="background-color: white; padding: 10px; margin: 10px 0; border-radius: 4px; border-left: 4px solid ${confidenceColor};">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                <strong>Text Block #${index + 1}</strong>
+                                <span style="background-color: ${confidenceColor}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">
+                                    ${confidence}% confidence
+                                </span>
+                            </div>
+                            <div style="background-color: #f8f9fa; padding: 8px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 14px; margin-bottom: 5px;">
+                                "${textBlock.text}"
+                            </div>
+                            <div style="font-size: 12px; color: #666;">
+                                <strong>Bounding Box:</strong> ${JSON.stringify(textBlock.bbox)}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                resultsHTML += `</div>`;
+            } else {
+                resultsHTML += `
+                    <div style="background-color: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <h3 style="margin-top: 0; color: #856404;">⚠️ No Text Found</h3>
+                        <p>No text was extracted from the document. This could be due to:</p>
+                        <ul>
+                            <li>Image quality is too low</li>
+                            <li>Text is not in a supported language</li>
+                            <li>Document is empty or contains only images</li>
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            // Add full result in collapsible section
+            resultsHTML += `
+                <details style="background-color: #e9ecef; padding: 15px; border-radius: 8px;">
+                    <summary style="cursor: pointer; font-weight: bold; color: #495057;">📋 View Full PaddleOCR Result (JSON)</summary>
+                    <pre style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; margin-top: 10px; font-size: 12px;">${JSON.stringify(result, null, 2)}</pre>
+                </details>
+            `;
+            
+            ocrResults.innerHTML = resultsHTML;
+            ocrResults.className = 'result success';
+            ocrResults.style.display = 'block';
+            
+            // Update statistics
+            updateOCRStatistics(result);
+        }
+        
+        function updateOCRStatistics(result) {
+            const statsDiv = document.getElementById('ocrStats');
+            const totalTextBlocks = result.text_count || 0;
+            const processingTime = result.processing_time || 'Unknown';
+            
+            // Calculate average confidence
+            let avgConfidence = 0;
+            let totalCharacters = 0;
+            
+            if (result.results && result.results.length > 0) {
+                const totalConfidence = result.results.reduce((sum, textBlock) => sum + (textBlock.confidence || 0), 0);
+                avgConfidence = (totalConfidence / result.results.length) * 100;
+                
+                totalCharacters = result.results.reduce((sum, textBlock) => sum + (textBlock.text || '').length, 0);
+            }
+            
+            // Update the statistics display
+            document.getElementById('totalTextBlocks').textContent = totalTextBlocks;
+            document.getElementById('avgConfidence').textContent = `${avgConfidence.toFixed(1)}%`;
+            document.getElementById('processingTime').textContent = processingTime;
+            document.getElementById('totalCharacters').textContent = totalCharacters.toLocaleString();
+            
+            // Show the statistics section
+            statsDiv.style.display = 'block';
+        }
+
+        function displayWebhookStatus(webhookDelivery) {
+            const webhookStatus = webhookDelivery.status;
+            const webhookResults = webhookDelivery.results || [];
+            
+            let statusHTML = `
+                <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <h3 style="margin-top: 0; color: #1976d2;">🔗 Webhook Delivery Status</h3>
+                    <p><strong>Status:</strong> 
+                        <span style="background-color: ${webhookStatus === 'completed' ? '#4caf50' : webhookStatus === 'failed' ? '#f44336' : '#ff9800'}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">
+                            ${webhookStatus.toUpperCase()}
+                        </span>
+                    </p>
+                    <p><strong>Timestamp:</strong> ${webhookDelivery.timestamp}</p>
+                </div>
+            `;
+            
+            if (webhookResults.length > 0) {
+                statusHTML += `
+                    <div style="background-color: #f3e5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <h3 style="margin-top: 0; color: #7b1fa2;">📡 Webhook Results</h3>
+                `;
+                
+                webhookResults.forEach((result, index) => {
+                    const successColor = result.success ? '#4caf50' : '#f44336';
+                    const successIcon = result.success ? '✅' : '❌';
+                    
+                    statusHTML += `
+                        <div style="background-color: white; padding: 10px; margin: 10px 0; border-radius: 4px; border-left: 4px solid ${successColor};">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                <strong>${successIcon} Webhook ${index + 1}</strong>
+                                <span style="background-color: ${successColor}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">
+                                    ${result.success ? 'SUCCESS' : 'FAILED'}
+                                </span>
+                            </div>
+                            <p><strong>Config:</strong> ${result.config_name || 'Unknown'}</p>
+                            <p><strong>URL:</strong> <code style="background-color: #f8f9fa; padding: 2px 4px; border-radius: 2px;">${result.url || 'Unknown'}</code></p>
+                            <p><strong>Timestamp:</strong> ${result.timestamp}</p>
+                            ${result.error ? `<p style="color: #f44336;"><strong>Error:</strong> ${result.error}</p>` : ''}
+                        </div>
+                    `;
+                });
+                
+                statusHTML += `</div>`;
+            } else {
+                statusHTML += `
+                    <div style="background-color: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <h3 style="margin-top: 0; color: #856404;">⚠️ No Webhook Results</h3>
+                        <p>No webhook delivery results found. This might indicate a configuration issue.</p>
+                    </div>
+                `;
+            }
+            
+            if (webhookDelivery.n8n_webhook_response) {
+                statusHTML += `
+                    <div style="background-color: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <h3 style="margin-top: 0; color: #2e7d32;">📨 n8n Webhook Response</h3>
+                        <div style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 14px;">
+                            ${webhookDelivery.n8n_webhook_response}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Update the upload result with webhook status
+            const uploadResult = document.getElementById('uploadResult');
+            uploadResult.innerHTML = statusHTML;
+            uploadResult.className = `result ${webhookStatus === 'completed' ? 'success' : 'error'}`;
+            uploadResult.style.display = 'block';
+        }
+
+        async function testWebhookDirectly() {
+            showResult('webhookTestResult', 'Testing webhook endpoint directly...', 'info');
+
+            try {
+                const testData = {
+                    success: true,
+                    filename: "test_document.pdf",
+                    text_count: 2,
+                    results: [
+                        {
+                            text: "Test medication text 1",
+                            confidence: 0.95,
+                            bbox: [[100, 200], [300, 200], [300, 250], [100, 250]]
+                        },
+                        {
+                            text: "Test medication text 2",
+                            confidence: 0.88,
+                            bbox: [[100, 300], [400, 300], [400, 350], [100, 350]]
+                        }
+                    ],
+                    webhook_delivery: {
+                        status: "testing",
+                        timestamp: new Date().toISOString()
+                    }
+                };
+
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                const result = await response.text();
+                
+                if (response.ok) {
+                    showResult('webhookTestResult', `✅ SUCCESS: Webhook responded with status ${response.status}\nResponse: ${result}`, 'success');
+                } else {
+                    showResult('webhookTestResult', `❌ ERROR: Webhook responded with status ${response.status}\nResponse: ${result}`, 'error');
+                }
+            } catch (error) {
+                showResult('webhookTestResult', `❌ CONNECTION FAILED: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkWebhookConfigs() {
+            showResult('webhookConfigsResult', 'Loading webhook configurations...', 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/webhook/configs`);
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult('webhookConfigsResult', JSON.stringify(result, null, 2), 'success');
+                } else {
+                    showResult('webhookConfigsResult', `Error: ${result.detail || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showResult('webhookConfigsResult', `Network error: ${error.message}`, 'error');
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('uploadResult').style.display = 'none';
+            document.getElementById('ocrResults').style.display = 'none';
+            document.getElementById('ocrStats').style.display = 'none';
+            document.getElementById('webhookTestResult').style.display = 'none';
+            document.getElementById('webhookConfigsResult').style.display = 'none';
+        }
+
+        function showResult(elementId, message, type) {
+            const resultDiv = document.getElementById(elementId);
+            resultDiv.textContent = message;
+            resultDiv.className = `result ${type}`;
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

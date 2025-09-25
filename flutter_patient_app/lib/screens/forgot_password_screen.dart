@@ -81,9 +81,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 40),
-                
+
                 // Icon and Title
-                Icon(
+                const Icon(
                   Icons.lock_reset,
                   size: 80,
                   color: AppColors.primary,
@@ -92,17 +92,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 Text(
                   AppStrings.forgotPasswordTitle,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Enter your Patient ID or Email to receive a password reset OTP',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                        color: AppColors.textSecondary,
+                      ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
@@ -141,7 +141,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
                     child: Column(
                       children: [
-                        Text(
+                        const Text(
                           'OTP sent successfully!',
                           style: TextStyle(
                             color: AppColors.success,
@@ -149,7 +149,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Text(
+                        const Text(
                           'Check your email for the OTP code',
                           style: TextStyle(color: AppColors.textSecondary),
                           textAlign: TextAlign.center,
@@ -179,7 +179,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   onPressed: () {
                     Navigator.pushReplacementNamed(context, '/login');
                   },
-                  child: Text(
+                  child: const Text(
                     'Back to Login',
                     style: TextStyle(color: AppColors.primary),
                   ),
@@ -191,4 +191,4 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       ),
     );
   }
-} 
+}

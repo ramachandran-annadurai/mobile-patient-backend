@@ -7,7 +7,7 @@ import '../widgets/loading_button.dart';
 
 class LoginScreen extends StatefulWidget {
   final String role;
-  
+
   const LoginScreen({super.key, required this.role});
 
   @override
@@ -60,15 +60,14 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   String get _roleTitle => widget.role == 'doctor' ? 'Doctor' : 'Patient';
-  String get _roleSubtitle => widget.role == 'doctor' 
-    ? 'Sign in to your doctor account' 
-    : 'Sign in to your patient account';
-  String get _identifierLabel => widget.role == 'doctor' 
-    ? 'Doctor ID or Email' 
-    : 'Patient ID or Email';
+  String get _roleSubtitle => widget.role == 'doctor'
+      ? 'Sign in to your doctor account'
+      : 'Sign in to your patient account';
+  String get _identifierLabel =>
+      widget.role == 'doctor' ? 'Doctor ID or Email' : 'Patient ID or Email';
   String get _identifierHint => widget.role == 'doctor'
-    ? 'Enter your Doctor ID or Email'
-    : 'Enter your Patient ID or Email';
+      ? 'Enter your Doctor ID or Email'
+      : 'Enter your Patient ID or Email';
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +77,8 @@ class _LoginScreenState extends State<LoginScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.primary),
-          onPressed: () => Navigator.pushReplacementNamed(context, '/role-selection'),
+          onPressed: () =>
+              Navigator.pushReplacementNamed(context, '/role-selection'),
         ),
       ),
       body: SafeArea(
@@ -90,10 +90,12 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 40),
-                
+
                 // Logo and Title
                 Icon(
-                  widget.role == 'doctor' ? Icons.medical_services : Icons.person,
+                  widget.role == 'doctor'
+                      ? Icons.medical_services
+                      : Icons.person,
                   size: 80,
                   color: AppColors.primary,
                 ),
@@ -101,17 +103,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'Welcome Back, $_roleTitle',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   _roleSubtitle,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                        color: AppColors.textSecondary,
+                      ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 48),
@@ -139,7 +141,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                      _obscurePassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                     ),
                     onPressed: () {
                       setState(() {
@@ -177,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Navigator.pushNamed(context, '/forgot-password');
                     }
                   },
-                  child: Text(
+                  child: const Text(
                     AppStrings.forgotPassword,
                     style: TextStyle(color: AppColors.primary),
                   ),
@@ -188,15 +192,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
+                    const Text(
                       AppStrings.dontHaveAccount,
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.pushReplacementNamed(context, '/signup', arguments: widget.role);
+                        Navigator.pushReplacementNamed(context, '/signup',
+                            arguments: widget.role);
                       },
-                      child: Text(
+                      child: const Text(
                         AppStrings.signup,
                         style: TextStyle(
                           color: AppColors.primary,
@@ -213,4 +218,4 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-} 
+}

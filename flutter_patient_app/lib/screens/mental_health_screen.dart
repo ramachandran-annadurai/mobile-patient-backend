@@ -9,7 +9,7 @@ import '../utils/date_utils.dart';
 
 class MentalHealthScreen extends StatefulWidget {
   final String? selectedDate;
-  
+
   const MentalHealthScreen({super.key, this.selectedDate});
 
   @override
@@ -19,7 +19,7 @@ class MentalHealthScreen extends StatefulWidget {
 class _MentalHealthScreenState extends State<MentalHealthScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
-  
+
   // Mood tracking
   String? _selectedMood;
   final TextEditingController _moodNoteController = TextEditingController();
@@ -37,7 +37,7 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
   // Daily check-in
   bool _hasCheckedInToday = false;
   DateTime? _lastCheckInDate;
-  
+
   // Mental health score
   double _mentalHealthScore = 7.0;
   final List<Map<String, dynamic>> _assessmentQuestions = [
@@ -96,7 +96,7 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
   Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
     final lastCheckIn = prefs.getString('last_mood_checkin');
-    
+
     if (lastCheckIn != null) {
       _lastCheckInDate = DateTime.parse(lastCheckIn);
       _hasCheckedInToday = _isSameDay(
@@ -108,15 +108,14 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
     // Load mood history
     final moodHistoryJson = prefs.getStringList('mood_history') ?? [];
     _moodHistory = moodHistoryJson
-        .map((json) => Map<String, dynamic>.from(
-            _parseJson(json)))
+        .map((json) => Map<String, dynamic>.from(_parseJson(json)))
         .toList();
 
     // Load assessment history
-    final assessmentHistoryJson = prefs.getStringList('assessment_history') ?? [];
+    final assessmentHistoryJson =
+        prefs.getStringList('assessment_history') ?? [];
     _assessmentHistory = assessmentHistoryJson
-        .map((json) => Map<String, dynamic>.from(
-            _parseJson(json)))
+        .map((json) => Map<String, dynamic>.from(_parseJson(json)))
         .toList();
 
     setState(() {});
@@ -126,52 +125,61 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userInfo = await authProvider.getCurrentUserInfo();
-      
+
       if (userInfo['userId'] == null) {
         return;
       }
 
       final patientId = userInfo['userId']!;
-      
+
       // Get mental health history from backend
-      final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/mental-health/history/$patientId'),
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .get(
+            Uri.parse('${ApiConfig.baseUrl}/mental-health/history/$patientId'),
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
-        
+
         if (responseData['success'] == true) {
-          final backendMoodHistory = responseData['data']['mood_history'] as List;
-          final backendAssessmentHistory = responseData['data']['assessment_history'] as List;
-          
+          final backendMoodHistory =
+              responseData['data']['mood_history'] as List;
+          final backendAssessmentHistory =
+              responseData['data']['assessment_history'] as List;
+
           // Update local mood history with backend data
           setState(() {
-            _moodHistory = backendMoodHistory.map((entry) => {
-              'date': entry['date'],
-              'mood': entry['mood'],
-              'note': entry['note'] ?? '',
-              'timestamp': DateTime.parse(entry['timestamp']).millisecondsSinceEpoch,
-            }).toList();
-            
-            _assessmentHistory = backendAssessmentHistory.map((entry) => {
-              'date': entry['date'],
-              'score': entry['score'],
-              'timestamp': DateTime.parse(entry['timestamp']).millisecondsSinceEpoch,
-            }).toList();
+            _moodHistory = backendMoodHistory
+                .map((entry) => {
+                      'date': entry['date'],
+                      'mood': entry['mood'],
+                      'note': entry['note'] ?? '',
+                      'timestamp': DateTime.parse(entry['timestamp'])
+                          .millisecondsSinceEpoch,
+                    })
+                .toList();
+
+            _assessmentHistory = backendAssessmentHistory
+                .map((entry) => {
+                      'date': entry['date'],
+                      'score': entry['score'],
+                      'timestamp': DateTime.parse(entry['timestamp'])
+                          .millisecondsSinceEpoch,
+                    })
+                .toList();
           });
 
           // Save to local storage
           final prefs = await SharedPreferences.getInstance();
-          final moodHistoryJson = _moodHistory
-              .map((entry) => _toJson(entry))
-              .toList();
+          final moodHistoryJson =
+              _moodHistory.map((entry) => _toJson(entry)).toList();
           await prefs.setStringList('mood_history', moodHistoryJson);
-          
-          final assessmentHistoryJson = _assessmentHistory
-              .map((entry) => _toJson(entry))
-              .toList();
-          await prefs.setStringList('assessment_history', assessmentHistoryJson);
+
+          final assessmentHistoryJson =
+              _assessmentHistory.map((entry) => _toJson(entry)).toList();
+          await prefs.setStringList(
+              'assessment_history', assessmentHistoryJson);
         }
       }
     } catch (e) {
@@ -181,15 +189,14 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
 
   bool _isSameDay(DateTime date1, DateTime date2) {
     return date1.year == date2.year &&
-           date1.month == date2.month &&
-           date1.day == date2.day;
+        date1.month == date2.month &&
+        date1.day == date2.day;
   }
 
   Map<String, dynamic> _parseJson(String jsonString) {
     try {
       return Map<String, dynamic>.from(
-        json.decode(jsonString) as Map<String, dynamic>
-      );
+          json.decode(jsonString) as Map<String, dynamic>);
     } catch (e) {
       return {};
     }
@@ -215,17 +222,19 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
       // Get current user info
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userInfo = await authProvider.getCurrentUserInfo();
-      
+
       if (userInfo['userId'] == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User not authenticated. Please login again.')),
+          const SnackBar(
+              content: Text('User not authenticated. Please login again.')),
         );
         return;
       }
 
       final patientId = userInfo['userId']!;
-      final selectedDate = widget.selectedDate ?? "${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}";
-      
+      final selectedDate = widget.selectedDate ??
+          "${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}";
+
       // Prepare data for backend
       final moodData = {
         'patient_id': patientId,
@@ -235,13 +244,15 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
       };
 
       // Send to backend
-      final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/mental-health/mood-checkin'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: json.encode(moodData),
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .post(
+            Uri.parse('${ApiConfig.baseUrl}/mental-health/mood-checkin'),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: json.encode(moodData),
+          )
+          .timeout(const Duration(seconds: 30));
 
       final responseData = json.decode(response.body);
 
@@ -249,10 +260,10 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
         // Success - save locally and update UI
         final prefs = await SharedPreferences.getInstance();
         final now = DateTime.now();
-        
+
         // Save check-in locally
         await prefs.setString('last_mood_checkin', now.toIso8601String());
-        
+
         // Save mood entry locally
         final moodEntry = {
           'date': now.toIso8601String(),
@@ -262,9 +273,8 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
         };
 
         _moodHistory.add(moodEntry);
-        final moodHistoryJson = _moodHistory
-            .map((entry) => _toJson(entry))
-            .toList();
+        final moodHistoryJson =
+            _moodHistory.map((entry) => _toJson(entry)).toList();
         await prefs.setStringList('mood_history', moodHistoryJson);
 
         setState(() {
@@ -274,22 +284,21 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Mood check-in saved successfully!'),
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Refresh data from backend
         _loadDataFromBackend();
-        
       } else {
         // Handle backend errors
         String errorMessage = 'Failed to save mood check-in';
         if (responseData['message'] != null) {
           errorMessage = responseData['message'];
         }
-        
+
         if (response.statusCode == 409) {
           // Already checked in today
           setState(() {
@@ -298,7 +307,7 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
           });
           errorMessage = 'Already checked in for today';
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
@@ -306,12 +315,12 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
           ),
         );
       }
-      
     } catch (e) {
       print('❌ Error saving mood check-in: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Network error. Please check your connection and try again.'),
+        const SnackBar(
+          content: Text(
+              'Network error. Please check your connection and try again.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -323,17 +332,19 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
       // Get current user info
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userInfo = await authProvider.getCurrentUserInfo();
-      
+
       if (userInfo['userId'] == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User not authenticated. Please login again.')),
+          const SnackBar(
+              content: Text('User not authenticated. Please login again.')),
         );
         return;
       }
 
       final patientId = userInfo['userId']!;
-      final selectedDate = widget.selectedDate ?? "${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}";
-      
+      final selectedDate = widget.selectedDate ??
+          "${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}";
+
       // Prepare data for backend
       final assessmentData = {
         'patient_id': patientId,
@@ -342,13 +353,15 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
       };
 
       // Send to backend
-      final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/mental-health/assessment'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: json.encode(assessmentData),
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .post(
+            Uri.parse('${ApiConfig.baseUrl}/mental-health/assessment'),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: json.encode(assessmentData),
+          )
+          .timeout(const Duration(seconds: 30));
 
       final responseData = json.decode(response.body);
 
@@ -356,7 +369,7 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
         // Success - save locally and update UI
         final prefs = await SharedPreferences.getInstance();
         final now = DateTime.now();
-        
+
         final assessmentEntry = {
           'date': now.toIso8601String(),
           'score': _mentalHealthScore,
@@ -364,25 +377,23 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
         };
 
         _assessmentHistory.add(assessmentEntry);
-        final assessmentHistoryJson = _assessmentHistory
-            .map((entry) => _toJson(entry))
-            .toList();
+        final assessmentHistoryJson =
+            _assessmentHistory.map((entry) => _toJson(entry)).toList();
         await prefs.setStringList('assessment_history', assessmentHistoryJson);
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Mental health assessment saved successfully!'),
             backgroundColor: Colors.green,
           ),
         );
-        
       } else {
         // Handle backend errors
         String errorMessage = 'Failed to save assessment';
         if (responseData['message'] != null) {
           errorMessage = responseData['message'];
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
@@ -390,12 +401,12 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
           ),
         );
       }
-      
     } catch (e) {
       print('❌ Error saving assessment: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Network error. Please check your connection and try again.'),
+        const SnackBar(
+          content: Text(
+              'Network error. Please check your connection and try again.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -417,10 +428,10 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
                 children: [
                   Row(
                     children: [
-                      CircleAvatar(
+                      const CircleAvatar(
                         radius: 25,
                         backgroundColor: AppColors.primary,
-                        child: const Icon(
+                        child: Icon(
                           Icons.psychology,
                           size: 30,
                           color: Colors.white,
@@ -431,29 +442,38 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                                                         Text(
-                               'Mental Health Check-in',
-                               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                 fontWeight: FontWeight.bold,
-                                 color: AppColors.primary,
-                               ),
-                             ),
-                             if (widget.selectedDate != null) ...[
-                               Text(
-                                 'Date: ${widget.selectedDate}',
-                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                   color: AppColors.primary,
-                                   fontWeight: FontWeight.w500,
-                                 ),
-                               ),
-                               const SizedBox(height: 4),
-                             ],
-                             Text(
-                               'Track your daily mood and mental well-being',
-                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                 color: Colors.grey[600],
-                               ),
-                             ),
+                            Text(
+                              'Mental Health Check-in',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                            ),
+                            if (widget.selectedDate != null) ...[
+                              Text(
+                                'Date: ${widget.selectedDate}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                              ),
+                              const SizedBox(height: 4),
+                            ],
+                            Text(
+                              'Track your daily mood and mental well-being',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Colors.grey[600],
+                                  ),
+                            ),
                           ],
                         ),
                       ),
@@ -470,8 +490,8 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
           Text(
             'How are you feeling today?',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           const SizedBox(height: 16),
 
@@ -489,7 +509,7 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
             itemBuilder: (context, index) {
               final mood = _moodOptions[index];
               final isSelected = _selectedMood == mood['name'];
-              
+
               return GestureDetector(
                 onTap: () {
                   setState(() {
@@ -498,19 +518,23 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
                 },
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isSelected ? mood['color'].withOpacity(0.2) : Colors.white,
+                    color: isSelected
+                        ? mood['color'].withOpacity(0.2)
+                        : Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isSelected ? mood['color'] : Colors.grey.shade300,
                       width: isSelected ? 2 : 1,
                     ),
-                    boxShadow: isSelected ? [
-                      BoxShadow(
-                        color: mood['color'].withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ] : null,
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: mood['color'].withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -542,8 +566,8 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
           Text(
             'Add a note (optional)',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           const SizedBox(height: 12),
           TextField(
@@ -576,7 +600,9 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
                 elevation: 2,
               ),
               child: Text(
-                _hasCheckedInToday ? 'Already Checked In Today' : 'Submit Mood Check-in',
+                _hasCheckedInToday
+                    ? 'Already Checked In Today'
+                    : 'Submit Mood Check-in',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -617,8 +643,8 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
             Text(
               'Recent Mood History',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
             const SizedBox(height: 16),
             ListView.builder(
@@ -631,7 +657,7 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
                   (m) => m['name'] == entry['mood'],
                   orElse: () => {'emoji': '😐', 'color': Colors.grey},
                 );
-                
+
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
@@ -647,7 +673,8 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          AppDateUtils.formatDate(DateTime.parse(entry['date'])),
+                          AppDateUtils.formatDate(
+                              DateTime.parse(entry['date'])),
                           style: TextStyle(color: Colors.grey[600]),
                         ),
                         if (entry['note']?.isNotEmpty == true) ...[
@@ -692,10 +719,10 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
                 children: [
                   Row(
                     children: [
-                      CircleAvatar(
+                      const CircleAvatar(
                         radius: 25,
                         backgroundColor: Colors.blue,
-                        child: const Icon(
+                        child: Icon(
                           Icons.assessment,
                           size: 30,
                           color: Colors.white,
@@ -708,16 +735,22 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
                           children: [
                             Text(
                               'Mental Health Assessment',
-                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue,
+                                  ),
                             ),
                             Text(
                               'Rate your mental well-being on a scale of 1-10',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Colors.grey[600],
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Colors.grey[600],
+                                  ),
                             ),
                           ],
                         ),
@@ -735,8 +768,8 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
           Text(
             'Daily Mental Health Assessment',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           const SizedBox(height: 16),
 
@@ -750,8 +783,8 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
                   Text(
                     'Overall Mental Health Score',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -850,8 +883,8 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
             Text(
               'Assessment History',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
             const SizedBox(height: 16),
             ListView.builder(
@@ -862,11 +895,14 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
                 final entry = _assessmentHistory[index];
                 final score = entry['score'] as double;
                 Color scoreColor;
-                
-                if (score >= 8) scoreColor = Colors.green;
-                else if (score >= 6) scoreColor = Colors.orange;
-                else scoreColor = Colors.red;
-                
+
+                if (score >= 8) {
+                  scoreColor = Colors.green;
+                } else if (score >= 6)
+                  scoreColor = Colors.orange;
+                else
+                  scoreColor = Colors.red;
+
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
@@ -880,9 +916,9 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
                         ),
                       ),
                     ),
-                    title: Text(
+                    title: const Text(
                       'Mental Health Score',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                     subtitle: Text(
                       AppDateUtils.formatDate(DateTime.parse(entry['date'])),
@@ -918,10 +954,10 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
                 children: [
                   Row(
                     children: [
-                      CircleAvatar(
+                      const CircleAvatar(
                         radius: 25,
                         backgroundColor: Colors.green,
-                        child: const Icon(
+                        child: Icon(
                           Icons.lightbulb,
                           size: 30,
                           color: Colors.white,
@@ -934,16 +970,22 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
                           children: [
                             Text(
                               'Mental Health Tips',
-                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green,
+                                  ),
                             ),
                             Text(
                               'Practical tips for better mental well-being',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Colors.grey[600],
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Colors.grey[600],
+                                  ),
                             ),
                           ],
                         ),
@@ -967,14 +1009,16 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.favorite, color: Colors.pink.shade600, size: 24),
+                      Icon(Icons.favorite,
+                          color: Colors.pink.shade600, size: 24),
                       const SizedBox(width: 12),
                       Text(
                         'Pregnancy Mental Health',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.pink.shade700,
-                        ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.pink.shade700,
+                                ),
                       ),
                     ],
                   ),
@@ -997,8 +1041,8 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
           Text(
             'Pregnancy Mental Health Tips',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           const SizedBox(height: 16),
 
@@ -1039,8 +1083,8 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
           Text(
             'Daily Wellness Tips',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           const SizedBox(height: 16),
 
@@ -1069,8 +1113,8 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
           Text(
             'Pregnancy Stress Management',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           const SizedBox(height: 16),
 
@@ -1105,8 +1149,8 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
           Text(
             'Pregnancy Sleep & Recovery',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           const SizedBox(height: 16),
 
@@ -1141,8 +1185,8 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
           Text(
             'Pregnancy Social Support',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           const SizedBox(height: 16),
 
@@ -1183,14 +1227,16 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.emergency, color: Colors.red.shade600, size: 24),
+                      Icon(Icons.emergency,
+                          color: Colors.red.shade600, size: 24),
                       const SizedBox(width: 12),
                       Text(
                         'Need Immediate Help?',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.red.shade700,
-                        ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.red.shade700,
+                                ),
                       ),
                     ],
                   ),
@@ -1243,9 +1289,8 @@ class _MentalHealthScreenState extends State<MentalHealthScreen>
     );
   }
 
-
-
-  Widget _buildTipCard(String title, String description, IconData icon, Color color) {
+  Widget _buildTipCard(
+      String title, String description, IconData icon, Color color) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(

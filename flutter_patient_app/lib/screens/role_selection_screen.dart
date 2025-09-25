@@ -14,9 +14,9 @@ class RoleSelectionScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 80),
-              
+
               // Logo and Title
-              Icon(
+              const Icon(
                 Icons.medical_services,
                 size: 100,
                 color: AppColors.primary,
@@ -25,17 +25,17 @@ class RoleSelectionScreen extends StatelessWidget {
               Text(
                 'Welcome to Patient Alert System',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
               Text(
                 'Please select your role to continue',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+                      color: AppColors.textSecondary,
+                    ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 60),
@@ -44,9 +44,11 @@ class RoleSelectionScreen extends StatelessWidget {
               _buildRoleCard(
                 context,
                 title: 'Patient',
-                subtitle: 'Access your patient dashboard and manage your health information',
+                subtitle:
+                    'Access your patient dashboard and manage your health information',
                 icon: Icons.person,
-                onTap: () => Navigator.pushReplacementNamed(context, '/login', arguments: 'patient'),
+                onTap: () => Navigator.pushReplacementNamed(context, '/login',
+                    arguments: 'patient'),
               ),
               const SizedBox(height: 24),
               _buildRoleCard(
@@ -54,7 +56,8 @@ class RoleSelectionScreen extends StatelessWidget {
                 title: 'Doctor',
                 subtitle: 'Access doctor dashboard and manage patient records',
                 icon: Icons.medical_services,
-                onTap: () => Navigator.pushReplacementNamed(context, '/login', arguments: 'doctor'),
+                onTap: () => Navigator.pushReplacementNamed(context, '/login',
+                    arguments: 'doctor'),
               ),
             ],
           ),
@@ -91,17 +94,17 @@ class RoleSelectionScreen extends StatelessWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
                 subtitle,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+                      color: AppColors.textSecondary,
+                    ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -110,4 +113,4 @@ class RoleSelectionScreen extends StatelessWidget {
       ),
     );
   }
-} 
+}

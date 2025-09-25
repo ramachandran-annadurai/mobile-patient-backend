@@ -16,18 +16,18 @@ class AppColors {
 
 class ApiConfig {
   // Backend server URLs - updated to match actual running server
-  static const String baseUrl = 'http://127.0.0.1:5000';  // Main backend server
+  static const String baseUrl = 'http://127.0.0.1:8000';  // Main backend server (FIXED: was 5000)
   static const String doctorBaseUrl = 'http://127.0.0.1:5001';
   // IMPORTANT: Nutrition backend is now integrated into main backend
-  static const String nutritionBaseUrl = 'http://127.0.0.1:5000';  // Now uses main backend
+  static const String nutritionBaseUrl = 'http://127.0.0.1:8000';  // Now uses main backend (FIXED: was 5000)
   
   // Alternative URLs for different platforms
-  static const String baseUrlAlt = 'http://localhost:5000';
-  static const String baseUrlLocal = 'http://0.0.0.0:5000';
+  static const String baseUrlAlt = 'http://localhost:8000';  // FIXED: was 5000
+  static const String baseUrlLocal = 'http://0.0.0.0:8000';  // FIXED: was 5000
   
   // Platform-specific URLs
-  static const String androidEmulatorUrl = 'http://10.0.2.2:5000';  // Android emulator
-  static const String iosSimulatorUrl = 'http://127.0.0.1:5000';     // iOS simulator
+  static const String androidEmulatorUrl = 'http://10.0.2.2:8000';  // Android emulator (FIXED: was 5000)
+  static const String iosSimulatorUrl = 'http://127.0.0.1:8000';     // iOS simulator (FIXED: was 5000)
   
   // Get the best URL for the current platform
   static String getBestBaseUrl() {

@@ -3,7 +3,7 @@ import '../services/api_service.dart';
 
 class UserProvider extends ChangeNotifier {
   final ApiService _apiService = ApiService();
-  
+
   bool _isLoading = false;
   Map<String, dynamic>? _userProfile;
   String? _error;
@@ -101,7 +101,7 @@ class UserProvider extends ChangeNotifier {
     try {
       final lastPeriod = DateTime.parse(lastPeriodDate);
       final today = DateTime.now();
-      
+
       // Validate that last period date is not in the future
       if (lastPeriod.isAfter(today)) {
         return {
@@ -110,22 +110,23 @@ class UserProvider extends ChangeNotifier {
           'expectedDeliveryDate': null,
         };
       }
-      
+
       // Calculate pregnancy week (gestational age)
       final daysDiff = today.difference(lastPeriod).inDays;
       int pregnancyWeek = (daysDiff / 7).floor();
-      
+
       // Ensure pregnancy week is within valid range (1-42 weeks)
       if (pregnancyWeek < 1) {
         pregnancyWeek = 1;
       } else if (pregnancyWeek > 42) {
         pregnancyWeek = 42;
       }
-      
+
       // Calculate expected delivery date (40 weeks from last period)
-      final expectedDelivery = lastPeriod.add(Duration(days: 40 * 7));
-      final expectedDeliveryDate = expectedDelivery.toIso8601String().split('T')[0];
-      
+      final expectedDelivery = lastPeriod.add(const Duration(days: 40 * 7));
+      final expectedDeliveryDate =
+          expectedDelivery.toIso8601String().split('T')[0];
+
       return {
         'pregnancyWeek': pregnancyWeek.toString(),
         'expectedDeliveryDate': expectedDeliveryDate,
@@ -149,4 +150,4 @@ class UserProvider extends ChangeNotifier {
     _userProfile = null;
     notifyListeners();
   }
-} 
+}

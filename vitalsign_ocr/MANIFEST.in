@@ -1,0 +1,44 @@
+# Include README and documentation
+include README.md
+include README_POSTMAN.md
+include LICENSE
+
+# Include configuration files
+include webhook_configs.json
+include requirements.txt
+
+# Include test files
+include test.html
+include Medication_OCR_API.postman_collection.json
+
+# Include startup scripts
+include start.bat
+include start.sh
+
+# Include package data
+recursive-include medication *.json
+recursive-include medication *.md
+recursive-include medication *.txt
+
+# Exclude unnecessary files
+exclude *.pyc
+exclude __pycache__
+exclude .git*
+exclude .DS_Store
+exclude .vscode
+exclude .idea
+exclude *.log
+exclude build/
+exclude dist/
+exclude *.egg-info/
+exclude .pytest_cache/
+exclude .coverage
+exclude .mypy_cache/
+exclude .tox/
+exclude .venv/
+exclude venv/
+exclude env/
+exclude node_modules/
+exclude .flutter-plugins-dependencies
+exclude .dart_tool/
+exclude pubspec.lock

@@ -1,0 +1,16 @@
+Test Prescription Document
+
+Patient: John Doe
+Date: 2025-09-24
+
+Medication: Aspirin
+Dosage: 100mg
+Frequency: Twice daily
+Duration: 7 days
+
+Instructions: Take with food
+Side effects: May cause stomach upset
+
+Doctor: Dr. Smith
+Signature: [Digital Signature]
+

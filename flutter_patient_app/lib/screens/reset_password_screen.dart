@@ -8,7 +8,7 @@ import '../widgets/loading_button.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String email;
-  
+
   const ResetPasswordScreen({
     super.key,
     required this.email,
@@ -90,9 +90,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 20),
-                
+
                 // Icon and Title
-                Icon(
+                const Icon(
                   Icons.lock_open,
                   size: 70,
                   color: AppColors.primary,
@@ -101,22 +101,23 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 Text(
                   'Set New Password',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Enter the OTP sent to your email and your new password',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                        color: AppColors.textSecondary,
+                      ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -124,9 +125,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   child: Text(
                     'Email: ${widget.email}',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -161,7 +162,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   obscureText: _obscureNewPassword,
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscureNewPassword ? Icons.visibility : Icons.visibility_off,
+                      _obscureNewPassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                     ),
                     onPressed: () {
                       setState(() {
@@ -190,7 +193,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   obscureText: _obscureConfirmPassword,
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                      _obscureConfirmPassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                     ),
                     onPressed: () {
                       setState(() {
@@ -223,12 +228,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   onPressed: () {
                     Navigator.pushReplacementNamed(context, '/login');
                   },
-                  child: Text(
+                  child: const Text(
                     'Back to Login',
                     style: TextStyle(color: AppColors.primary),
                   ),
                 ),
-                
+
                 // Extra space at bottom to prevent overflow
                 const SizedBox(height: 20),
               ],
@@ -238,4 +243,4 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       ),
     );
   }
-} 
+}

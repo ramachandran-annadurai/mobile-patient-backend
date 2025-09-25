@@ -33,19 +33,23 @@ class WebhookService:
         for config in active_configs:
             logger.info(f"🚀 Sending webhook to: {config.name} ({config.url})")
             try:
-                success = await self._send_webhook_with_config(config, ocr_data, filename)
+                result = await self._send_webhook_with_config(config, ocr_data, filename)
                 results.append({
                     "config_id": config.id,
                     "config_name": config.name,
                     "url": config.url,
-                    "success": success,
+                    "success": result["success"],
+                    "response_data": result.get("response_data"),
+                    "error": result.get("error"),
                     "timestamp": datetime.utcnow().isoformat()
                 })
                 
-                if success:
+                if result["success"]:
                     logger.info(f"✅ Webhook sent successfully to {config.name} ({config.url})")
+                    if result.get("response_data"):
+                        logger.info(f"🔍 Response data: {result['response_data']}")
                 else:
-                    logger.warning(f"❌ Failed to send webhook to {config.name}")
+                    logger.warning(f"❌ Failed to send webhook to {config.name}: {result.get('error', 'Unknown error')}")
                     
             except Exception as e:
                 logger.error(f"💥 Error sending webhook to {config.name}: {e}")
@@ -60,10 +64,10 @@ class WebhookService:
         
         return results
     
-    async def _send_webhook_with_config(self, config: Any, ocr_data: Dict[str, Any], filename: Optional[str] = None) -> bool:
-        """Send webhook using specific configuration"""
+    async def _send_webhook_with_config(self, config: Any, ocr_data: Dict[str, Any], filename: Optional[str] = None) -> Dict[str, Any]:
+        """Send webhook using specific configuration and return response data"""
         if not config.enabled or not config.url:
-            return False
+            return {"success": False, "error": "Configuration disabled or no URL"}
         
         # Prepare webhook payload
         payload = self._prepare_payload(config, ocr_data, filename)
@@ -71,11 +75,11 @@ class WebhookService:
         # Send webhook with retry logic
         for attempt in range(config.retry_attempts):
             try:
-                success = await self._send_webhook_request(config, payload)
-                if success:
-                    return True
+                result = await self._send_webhook_request(config, payload)
+                if result["success"]:
+                    return result
                 else:
-                    logger.warning(f"Webhook attempt {attempt + 1} failed for {config.name}")
+                    logger.warning(f"Webhook attempt {attempt + 1} failed for {config.name}: {result.get('error', 'Unknown error')}")
             except Exception as e:
                 logger.error(f"Webhook attempt {attempt + 1} error for {config.name}: {e}")
             
@@ -86,7 +90,7 @@ class WebhookService:
                 await asyncio.sleep(wait_time)
         
         logger.error(f"Failed to send webhook to {config.name} after {config.retry_attempts} attempts")
-        return False
+        return {"success": False, "error": f"Failed after {config.retry_attempts} attempts"}
     
     def _prepare_payload(self, config: Any, ocr_data: Dict[str, Any], filename: Optional[str] = None) -> Dict[str, Any]:
         """Prepare webhook payload based on configuration template"""
@@ -193,8 +197,8 @@ class WebhookService:
         
         return full_text_content.strip()
     
-    async def _send_webhook_request(self, config: Any, payload: Dict[str, Any]) -> bool:
-        """Send webhook request with configuration settings"""
+    async def _send_webhook_request(self, config: Any, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Send webhook request with configuration settings and return response data"""
         try:
             timeout = aiohttp.ClientTimeout(total=config.timeout)
             async with aiohttp.ClientSession(timeout=timeout) as session:
@@ -212,17 +216,26 @@ class WebhookService:
                 ) as response:
                     if response.status in [200, 201, 202]:
                         logger.info(f"Webhook sent successfully to {config.name}. Status: {response.status}")
-                        return True
+                        # Try to get response data
+                        try:
+                            response_data = await response.json()
+                            logger.info(f"🔍 N8N Response data captured: {response_data}")
+                            return {"success": True, "response_data": response_data}
+                        except:
+                            response_text = await response.text()
+                            logger.info(f"🔍 N8N Response text captured: {response_text}")
+                            return {"success": True, "response_data": response_text}
                     else:
-                        logger.error(f"Webhook failed for {config.name} with status: {response.status}")
-                        return False
+                        response_text = await response.text()
+                        logger.error(f"Webhook failed for {config.name} with status: {response.status} - {response_text}")
+                        return {"success": False, "error": f"HTTP {response.status}: {response_text}"}
                         
         except asyncio.TimeoutError:
             logger.error(f"Webhook timeout for {config.name} after {config.timeout} seconds")
-            return False
+            return {"success": False, "error": f"Timeout after {config.timeout} seconds"}
         except Exception as e:
             logger.error(f"Webhook error for {config.name}: {e}")
-            return False
+            return {"success": False, "error": str(e)}
     
     def get_webhook_status(self) -> Dict[str, Any]:
         """Get webhook service status"""

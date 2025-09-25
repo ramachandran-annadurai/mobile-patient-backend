@@ -9,13 +9,15 @@ class PatientDailyTrackingDetailsScreen extends StatefulWidget {
   const PatientDailyTrackingDetailsScreen({super.key});
 
   @override
-  State<PatientDailyTrackingDetailsScreen> createState() => _PatientDailyTrackingDetailsScreenState();
+  State<PatientDailyTrackingDetailsScreen> createState() =>
+      _PatientDailyTrackingDetailsScreenState();
 }
 
-class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTrackingDetailsScreen> {
+class _PatientDailyTrackingDetailsScreenState
+    extends State<PatientDailyTrackingDetailsScreen> {
   final TextEditingController _tabletNameController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
-  
+
   bool _isLoading = true;
   bool _isSaving = false;
   bool _tabletTaken = false; // New field for tablet taken status
@@ -42,25 +44,28 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userInfo = await authProvider.getCurrentUserInfo();
-      
+
       if (userInfo['userId'] != null) {
         final apiService = ApiService();
-        final response = await apiService.getPrescriptionDetails(userInfo['userId']!);
-        
+        final response =
+            await apiService.getPrescriptionDetails(userInfo['userId']!);
+
         if (response['success'] == true) {
           final prescriptions = response['prescriptions'] ?? [];
-          
+
           // Check if tablet name matches any prescribed medication
           bool isPrescribed = prescriptions.any((prescription) {
-            final medName = prescription['medication_name']?.toString().toLowerCase() ?? '';
+            final medName =
+                prescription['medication_name']?.toString().toLowerCase() ?? '';
             final tabletNameLower = tabletName.toLowerCase();
-            return medName.contains(tabletNameLower) || tabletNameLower.contains(medName);
+            return medName.contains(tabletNameLower) ||
+                tabletNameLower.contains(medName);
           });
-          
+
           setState(() {
             _isPrescribed = isPrescribed;
           });
-          
+
           if (isPrescribed) {
             setState(() {
               _successMessage = '✅ This tablet is prescribed for you';
@@ -70,7 +75,7 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
               _errorMessage = '⚠️ This tablet is not in your prescription list';
             });
           }
-          
+
           // Clear messages after 3 seconds
           Future.delayed(const Duration(seconds: 3), () {
             if (mounted) {
@@ -96,19 +101,22 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
 
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userInfo = await authProvider.getCurrentUserInfo();
-      
+
       if (userInfo['userId'] != null) {
         final apiService = ApiService();
-        final response = await apiService.getTabletTrackingHistory(userInfo['userId']!);
-        
+        final response =
+            await apiService.getTabletTrackingHistory(userInfo['userId']!);
+
         if (response['success'] == true) {
           setState(() {
-            _tabletHistory = List<Map<String, dynamic>>.from(response['tablet_tracking_history'] ?? []);
+            _tabletHistory = List<Map<String, dynamic>>.from(
+                response['tablet_tracking_history'] ?? []);
             _isLoading = false;
           });
         } else {
           setState(() {
-            _errorMessage = response['message'] ?? 'Failed to load tablet tracking history';
+            _errorMessage =
+                response['message'] ?? 'Failed to load tablet tracking history';
             _isLoading = false;
           });
         }
@@ -143,25 +151,31 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
 
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userInfo = await authProvider.getCurrentUserInfo();
-      
+
       if (userInfo['userId'] != null) {
         final apiService = ApiService();
-        
+
         // Format data for tablet tracking (stored in medication_daily_tracking array)
         final tabletTrackingData = {
           'patient_id': userInfo['userId']!,
           'tablet_name': _tabletNameController.text.trim(),
-          'tablet_taken_today': _tabletTaken, // New field for tablet taken today status
+          'tablet_taken_today':
+              _tabletTaken, // New field for tablet taken today status
           'is_prescribed': _isPrescribed, // Prescription status
           'notes': _notesController.text.trim(),
-          'date_taken': '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}', // Format: "19/8/2025"
-          'time_taken': DateTime.now().toString().substring(0, 19), // Format: "2025-08-19 07:56:17.744"
+          'date_taken':
+              '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}', // Format: "19/8/2025"
+          'time_taken': DateTime.now()
+              .toString()
+              .substring(0, 19), // Format: "2025-08-19 07:56:17.744"
           'type': 'daily_tracking', // Fixed type field
-          'timestamp': DateTime.now().toIso8601String(), // Format: "2025-08-19T07:56:17.806125"
+          'timestamp': DateTime.now()
+              .toIso8601String(), // Format: "2025-08-19T07:56:17.806125"
         };
 
-        final response = await apiService.saveTabletTracking(tabletTrackingData);
-        
+        final response =
+            await apiService.saveTabletTracking(tabletTrackingData);
+
         if (response['success'] == true) {
           setState(() {
             _successMessage = 'Tablet tracking saved successfully!';
@@ -170,10 +184,10 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
             _tabletTaken = false; // Reset tablet taken status
             _isPrescribed = false; // Reset prescription status
           });
-          
+
           // Reload the history
           await _loadTabletHistory();
-          
+
           // Clear success message after 3 seconds
           Future.delayed(const Duration(seconds: 3), () {
             if (mounted) {
@@ -184,7 +198,8 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
           });
         } else {
           setState(() {
-            _errorMessage = response['message'] ?? 'Failed to save tablet tracking';
+            _errorMessage =
+                response['message'] ?? 'Failed to save tablet tracking';
           });
         }
       } else {
@@ -236,7 +251,8 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.check_circle, color: Colors.green.shade700, size: 20),
+                          Icon(Icons.check_circle,
+                              color: Colors.green.shade700, size: 20),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -247,7 +263,7 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
                         ],
                       ),
                     ),
-                  
+
                   if (_errorMessage.isNotEmpty)
                     Container(
                       width: double.infinity,
@@ -260,7 +276,8 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.error, color: Colors.red.shade700, size: 20),
+                          Icon(Icons.error,
+                              color: Colors.red.shade700, size: 20),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -282,32 +299,43 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
                         children: [
                           Text(
                             'Add New Tablet Entry',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
                           ),
                           const SizedBox(height: 16),
-                          
+
                           // Tablet Taken Toggle
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 'Tablet Taken Today?',
-                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey.shade700,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey.shade700,
+                                    ),
                               ),
                               const SizedBox(height: 8),
                               Row(
                                 children: [
                                   Expanded(
                                     child: ElevatedButton(
-                                      onPressed: () => setState(() => _tabletTaken = true),
+                                      onPressed: () =>
+                                          setState(() => _tabletTaken = true),
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: _tabletTaken ? AppColors.primary : Colors.grey.shade300,
-                                        foregroundColor: _tabletTaken ? Colors.white : Colors.grey.shade600,
+                                        backgroundColor: _tabletTaken
+                                            ? AppColors.primary
+                                            : Colors.grey.shade300,
+                                        foregroundColor: _tabletTaken
+                                            ? Colors.white
+                                            : Colors.grey.shade600,
                                         elevation: _tabletTaken ? 2 : 0,
                                       ),
                                       child: const Text('Yes'),
@@ -316,10 +344,15 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: ElevatedButton(
-                                      onPressed: () => setState(() => _tabletTaken = false),
+                                      onPressed: () =>
+                                          setState(() => _tabletTaken = false),
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: !_tabletTaken ? AppColors.primary : Colors.grey.shade300,
-                                        foregroundColor: !_tabletTaken ? Colors.white : Colors.grey.shade600,
+                                        backgroundColor: !_tabletTaken
+                                            ? AppColors.primary
+                                            : Colors.grey.shade300,
+                                        foregroundColor: !_tabletTaken
+                                            ? Colors.white
+                                            : Colors.grey.shade600,
                                         elevation: !_tabletTaken ? 2 : 0,
                                       ),
                                       child: const Text('No'),
@@ -330,7 +363,7 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
                             ],
                           ),
                           const SizedBox(height: 16),
-                          
+
                           TextFormField(
                             controller: _tabletNameController,
                             decoration: const InputDecoration(
@@ -344,34 +377,44 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
                             },
                           ),
                           const SizedBox(height: 16),
-                          
+
                           // Prescription Status Indicator
                           if (_tabletNameController.text.trim().isNotEmpty)
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: _isPrescribed ? Colors.green.shade50 : Colors.orange.shade50,
+                                color: _isPrescribed
+                                    ? Colors.green.shade50
+                                    : Colors.orange.shade50,
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
-                                  color: _isPrescribed ? Colors.green.shade200 : Colors.orange.shade200,
+                                  color: _isPrescribed
+                                      ? Colors.green.shade200
+                                      : Colors.orange.shade200,
                                 ),
                               ),
                               child: Row(
                                 children: [
                                   Icon(
-                                    _isPrescribed ? Icons.check_circle : Icons.info,
-                                    color: _isPrescribed ? Colors.green.shade700 : Colors.orange.shade700,
+                                    _isPrescribed
+                                        ? Icons.check_circle
+                                        : Icons.info,
+                                    color: _isPrescribed
+                                        ? Colors.green.shade700
+                                        : Colors.orange.shade700,
                                     size: 16,
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      _isPrescribed 
-                                        ? '✅ This tablet is prescribed for you'
-                                        : '⚠️ This tablet is not in your prescription list',
+                                      _isPrescribed
+                                          ? '✅ This tablet is prescribed for you'
+                                          : '⚠️ This tablet is not in your prescription list',
                                       style: TextStyle(
-                                        color: _isPrescribed ? Colors.green.shade700 : Colors.orange.shade700,
+                                        color: _isPrescribed
+                                            ? Colors.green.shade700
+                                            : Colors.orange.shade700,
                                         fontSize: 12,
                                         fontWeight: FontWeight.w500,
                                       ),
@@ -380,9 +423,9 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
                                 ],
                               ),
                             ),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           TextFormField(
                             controller: _notesController,
                             decoration: const InputDecoration(
@@ -394,20 +437,23 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
                             maxLines: 2,
                           ),
                           const SizedBox(height: 16),
-                          
+
                           SizedBox(
                             width: double.infinity,
                             height: 50,
                             child: ElevatedButton.icon(
                               onPressed: _isSaving ? null : _saveTabletTaken,
-                              icon: _isSaving 
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  )
-                                : const Icon(Icons.save),
-                              label: Text(_isSaving ? 'Saving...' : 'Save Tablet Entry'),
+                              icon: _isSaving
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2),
+                                    )
+                                  : const Icon(Icons.save),
+                              label: Text(_isSaving
+                                  ? 'Saving...'
+                                  : 'Save Tablet Entry'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
                                 foregroundColor: Colors.white,
@@ -418,32 +464,33 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Medication History Section
                   Row(
                     children: [
-                      Icon(Icons.history, color: AppColors.primary, size: 24),
+                      const Icon(Icons.history,
+                          color: AppColors.primary, size: 24),
                       const SizedBox(width: 8),
                       Text(
                         'Tablet History',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                              fontWeight: FontWeight.w600,
+                            ),
                       ),
                       const Spacer(),
                       Text(
                         'Total: ${_tabletHistory.length}',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey.shade600,
-                        ),
+                              color: Colors.grey.shade600,
+                            ),
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   if (_tabletHistory.isEmpty)
                     Container(
                       width: double.infinity,
@@ -462,16 +509,22 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
                           const SizedBox(height: 16),
                           Text(
                             'No tablet entries yet',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Colors.grey.shade600,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  color: Colors.grey.shade600,
+                                ),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Start tracking your daily tablet intake above',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.grey.shade500,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Colors.grey.shade500,
+                                ),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -487,7 +540,7 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
                         return Card(
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
-                            leading: CircleAvatar(
+                            leading: const CircleAvatar(
                               backgroundColor: AppColors.primary,
                               child: Icon(
                                 Icons.medication,
@@ -497,7 +550,8 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
                             ),
                             title: Text(
                               entry['tablet_name'] ?? 'Unknown Tablet',
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
                             ),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -506,23 +560,24 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
                                 Row(
                                   children: [
                                     Icon(
-                                      entry['tablet_taken_today'] == true 
-                                        ? Icons.check_circle 
-                                        : Icons.cancel,
-                                      color: entry['tablet_taken_today'] == true 
-                                        ? Colors.green 
-                                        : Colors.red,
+                                      entry['tablet_taken_today'] == true
+                                          ? Icons.check_circle
+                                          : Icons.cancel,
+                                      color: entry['tablet_taken_today'] == true
+                                          ? Colors.green
+                                          : Colors.red,
                                       size: 16,
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      entry['tablet_taken_today'] == true 
-                                        ? 'Tablet Taken' 
-                                        : 'Tablet Not Taken',
+                                      entry['tablet_taken_today'] == true
+                                          ? 'Tablet Taken'
+                                          : 'Tablet Not Taken',
                                       style: TextStyle(
-                                        color: entry['tablet_taken_today'] == true 
-                                          ? Colors.green.shade700 
-                                          : Colors.red.shade700,
+                                        color:
+                                            entry['tablet_taken_today'] == true
+                                                ? Colors.green.shade700
+                                                : Colors.red.shade700,
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -534,23 +589,23 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
                                 Row(
                                   children: [
                                     Icon(
-                                      entry['is_prescribed'] == true 
-                                        ? Icons.verified 
-                                        : Icons.info_outline,
-                                      color: entry['is_prescribed'] == true 
-                                        ? Colors.blue 
-                                        : Colors.orange,
+                                      entry['is_prescribed'] == true
+                                          ? Icons.verified
+                                          : Icons.info_outline,
+                                      color: entry['is_prescribed'] == true
+                                          ? Colors.blue
+                                          : Colors.orange,
                                       size: 16,
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      entry['is_prescribed'] == true 
-                                        ? 'Prescribed Medication' 
-                                        : 'Over-the-Counter',
+                                      entry['is_prescribed'] == true
+                                          ? 'Prescribed Medication'
+                                          : 'Over-the-Counter',
                                       style: TextStyle(
-                                        color: entry['is_prescribed'] == true 
-                                          ? Colors.blue.shade700 
-                                          : Colors.orange.shade700,
+                                        color: entry['is_prescribed'] == true
+                                            ? Colors.blue.shade700
+                                            : Colors.orange.shade700,
                                         fontSize: 12,
                                         fontWeight: FontWeight.w500,
                                       ),
@@ -594,9 +649,9 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
                         );
                       },
                     ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Refresh Button
                   SizedBox(
                     width: double.infinity,
@@ -607,7 +662,7 @@ class _PatientDailyTrackingDetailsScreenState extends State<PatientDailyTracking
                       label: const Text('Refresh History'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primary,
-                        side: BorderSide(color: AppColors.primary),
+                        side: const BorderSide(color: AppColors.primary),
                       ),
                     ),
                   ),

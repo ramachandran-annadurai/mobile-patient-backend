@@ -11,35 +11,37 @@ class DetailedFoodEntryScreen extends StatefulWidget {
   final Function(Map<String, dynamic>) onFoodSaved;
 
   const DetailedFoodEntryScreen({
-    Key? key,
+    super.key,
     required this.userId,
     required this.username,
     required this.email,
     required this.pregnancyWeek,
     required this.onFoodSaved,
-  }) : super(key: key);
+  });
 
   @override
-  State<DetailedFoodEntryScreen> createState() => _DetailedFoodEntryScreenState();
+  State<DetailedFoodEntryScreen> createState() =>
+      _DetailedFoodEntryScreenState();
 }
 
 class _DetailedFoodEntryScreenState extends State<DetailedFoodEntryScreen> {
   final TextEditingController _foodController = TextEditingController();
   final TextEditingController _allergyController = TextEditingController();
-  final TextEditingController _medicalConditionController = TextEditingController();
+  final TextEditingController _medicalConditionController =
+      TextEditingController();
   final TextEditingController _notesController = TextEditingController();
-  
-  bool _isLoading = false;
+
+  final bool _isLoading = false;
   bool _isSaving = false;
   bool _isLoadingPregnancyInfo = true;
-  
+
   String _selectedMealType = 'breakfast';
   String _dietaryPreference = 'vegetarian';
   int _pregnancyWeek = 1;
-  
-  List<String> _allergies = [];
-  List<String> _medicalConditions = [];
-  
+
+  final List<String> _allergies = [];
+  final List<String> _medicalConditions = [];
+
   // Dietary preference options
   final List<String> _dietaryOptions = [
     'vegetarian',
@@ -72,35 +74,39 @@ class _DetailedFoodEntryScreenState extends State<DetailedFoodEntryScreen> {
         _isLoadingPregnancyInfo = true;
       });
 
-      print('🔍 Fetching current pregnancy week for patient ID: ${widget.userId}');
-      
+      print(
+          '🔍 Fetching current pregnancy week for patient ID: ${widget.userId}');
+
       final response = await http.get(
-        Uri.parse('${ApiConfig.nutritionBaseUrl}/get-current-pregnancy-week/${widget.userId}'),
+        Uri.parse(
+            '${ApiConfig.nutritionBaseUrl}/get-current-pregnancy-week/${widget.userId}'),
         headers: {'Content-Type': 'application/json'},
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         print('✅ Current pregnancy week response: ${json.encode(data)}');
-        
+
         if (data['success'] == true) {
           final currentWeek = data['current_pregnancy_week'] ?? 1;
           final autoFetched = data['auto_fetched'] ?? false;
-          
+
           setState(() {
             _pregnancyWeek = currentWeek;
             _isLoadingPregnancyInfo = false;
           });
-          
-          print('✅ Auto-fetched pregnancy week: $_pregnancyWeek (Auto-fetched: $autoFetched)');
-          
+
+          print(
+              '✅ Auto-fetched pregnancy week: $_pregnancyWeek (Auto-fetched: $autoFetched)');
+
           // Show success message if auto-fetched
           if (autoFetched) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('✅ Pregnancy Week $_pregnancyWeek automatically fetched from your profile'),
+                content: Text(
+                    '✅ Pregnancy Week $_pregnancyWeek automatically fetched from your profile'),
                 backgroundColor: Colors.green,
-                duration: Duration(seconds: 3),
+                duration: const Duration(seconds: 3),
               ),
             );
           }
@@ -188,36 +194,42 @@ class _DetailedFoodEntryScreenState extends State<DetailedFoodEntryScreen> {
 
       print('📤 Sending detailed food data to backend: $foodData');
 
-      final response = await http.post(
-        Uri.parse('${ApiConfig.nutritionBaseUrl}/nutrition/save-detailed-food-entry'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(foodData),
-      ).timeout(const Duration(seconds: 60));
+      final response = await http
+          .post(
+            Uri.parse(
+                '${ApiConfig.nutritionBaseUrl}/nutrition/save-detailed-food-entry'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(foodData),
+          )
+          .timeout(const Duration(seconds: 60));
 
       print('📡 Save API Response Status: ${response.statusCode}');
       print('📡 Save API Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        
+
         if (data['success'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('✅ ${data['message'] ?? 'Detailed food entry saved successfully!'}'),
+              content: Text(
+                  '✅ ${data['message'] ?? 'Detailed food entry saved successfully!'}'),
               backgroundColor: Colors.green,
             ),
           );
-          
+
           // Call the callback to notify parent
           widget.onFoodSaved(foodData);
-          
+
           // Navigate back
           Navigator.of(context).pop();
         } else {
-          throw Exception(data['error'] ?? 'Unknown error saving detailed food entry');
+          throw Exception(
+              data['error'] ?? 'Unknown error saving detailed food entry');
         }
       } else {
-        throw Exception('Save API returned status ${response.statusCode}: ${response.body}');
+        throw Exception(
+            'Save API returned status ${response.statusCode}: ${response.body}');
       }
     } catch (e) {
       print('❌ Error saving detailed food entry: $e');
@@ -254,7 +266,8 @@ class _DetailedFoodEntryScreenState extends State<DetailedFoodEntryScreen> {
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
                     children: [
-                      Icon(Icons.pregnant_woman, color: Colors.pink[600], size: 24),
+                      Icon(Icons.pregnant_woman,
+                          color: Colors.pink[600], size: 24),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -269,7 +282,8 @@ class _DetailedFoodEntryScreenState extends State<DetailedFoodEntryScreen> {
                               const CircularProgressIndicator(strokeWidth: 2)
                             else
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
                                 decoration: BoxDecoration(
                                   color: Colors.pink[100],
                                   borderRadius: BorderRadius.circular(16),
@@ -296,9 +310,9 @@ class _DetailedFoodEntryScreenState extends State<DetailedFoodEntryScreen> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Food Details
               Card(
                 child: Padding(
@@ -314,20 +328,20 @@ class _DetailedFoodEntryScreenState extends State<DetailedFoodEntryScreen> {
                       TextField(
                         controller: _foodController,
                         maxLines: 3,
-                                               decoration: InputDecoration(
-                         hintText: 'Describe what you ate in detail...',
-                         border: const OutlineInputBorder(),
-                         filled: true,
-                         fillColor: Colors.grey[50],
-                       ),
+                        decoration: InputDecoration(
+                          hintText: 'Describe what you ate in detail...',
+                          border: const OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Meal Type and Dietary Preference
               Card(
                 child: Padding(
@@ -340,7 +354,7 @@ class _DetailedFoodEntryScreenState extends State<DetailedFoodEntryScreen> {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Meal Type
                       Text(
                         'Meal Type:',
@@ -351,15 +365,18 @@ class _DetailedFoodEntryScreenState extends State<DetailedFoodEntryScreen> {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          _buildSelectionChip('breakfast', 'Breakfast', Icons.wb_sunny),
-                          _buildSelectionChip('lunch', 'Lunch', Icons.restaurant),
-                          _buildSelectionChip('dinner', 'Dinner', Icons.nights_stay),
+                          _buildSelectionChip(
+                              'breakfast', 'Breakfast', Icons.wb_sunny),
+                          _buildSelectionChip(
+                              'lunch', 'Lunch', Icons.restaurant),
+                          _buildSelectionChip(
+                              'dinner', 'Dinner', Icons.nights_stay),
                           _buildSelectionChip('snack', 'Snack', Icons.coffee),
                         ],
                       ),
-                      
+
                       const SizedBox(height: 16),
-                      
+
                       // Dietary Preference
                       Text(
                         'Dietary Preference:',
@@ -368,15 +385,16 @@ class _DetailedFoodEntryScreenState extends State<DetailedFoodEntryScreen> {
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
                         value: _dietaryPreference,
-                                                 decoration: InputDecoration(
-                           border: const OutlineInputBorder(),
-                           filled: true,
-                           fillColor: Colors.grey[50],
-                         ),
+                        decoration: InputDecoration(
+                          border: const OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                        ),
                         items: _dietaryOptions.map((String option) {
                           return DropdownMenuItem<String>(
                             value: option,
-                            child: Text(option.replaceAll('-', ' ').toUpperCase()),
+                            child:
+                                Text(option.replaceAll('-', ' ').toUpperCase()),
                           );
                         }).toList(),
                         onChanged: (String? newValue) {
@@ -391,9 +409,9 @@ class _DetailedFoodEntryScreenState extends State<DetailedFoodEntryScreen> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Allergies Section
               Card(
                 child: Padding(
@@ -406,18 +424,17 @@ class _DetailedFoodEntryScreenState extends State<DetailedFoodEntryScreen> {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 16),
-                      
                       Row(
                         children: [
                           Expanded(
                             child: TextField(
                               controller: _allergyController,
-                                                           decoration: InputDecoration(
-                               hintText: 'Add allergy (e.g., nuts, dairy)',
-                               border: const OutlineInputBorder(),
-                               filled: true,
-                               fillColor: Colors.grey[50],
-                             ),
+                              decoration: InputDecoration(
+                                hintText: 'Add allergy (e.g., nuts, dairy)',
+                                border: const OutlineInputBorder(),
+                                filled: true,
+                                fillColor: Colors.grey[50],
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -427,28 +444,30 @@ class _DetailedFoodEntryScreenState extends State<DetailedFoodEntryScreen> {
                           ),
                         ],
                       ),
-                      
                       if (_allergies.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
-                          children: _allergies.map((allergy) => Chip(
-                            label: Text(allergy),
-                            deleteIcon: const Icon(Icons.close, size: 18),
-                            onDeleted: () => _removeAllergy(allergy),
-                            backgroundColor: Colors.red[100],
-                            deleteIconColor: Colors.red[600],
-                          )).toList(),
+                          children: _allergies
+                              .map((allergy) => Chip(
+                                    label: Text(allergy),
+                                    deleteIcon:
+                                        const Icon(Icons.close, size: 18),
+                                    onDeleted: () => _removeAllergy(allergy),
+                                    backgroundColor: Colors.red[100],
+                                    deleteIconColor: Colors.red[600],
+                                  ))
+                              .toList(),
                         ),
                       ],
                     ],
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Medical Conditions Section
               Card(
                 child: Padding(
@@ -461,18 +480,18 @@ class _DetailedFoodEntryScreenState extends State<DetailedFoodEntryScreen> {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 16),
-                      
                       Row(
                         children: [
                           Expanded(
                             child: TextField(
                               controller: _medicalConditionController,
-                                                           decoration: InputDecoration(
-                               hintText: 'Add medical condition (e.g., diabetes, heart problem)',
-                               border: const OutlineInputBorder(),
-                               filled: true,
-                               fillColor: Colors.grey[50],
-                             ),
+                              decoration: InputDecoration(
+                                hintText:
+                                    'Add medical condition (e.g., diabetes, heart problem)',
+                                border: const OutlineInputBorder(),
+                                filled: true,
+                                fillColor: Colors.grey[50],
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -482,28 +501,31 @@ class _DetailedFoodEntryScreenState extends State<DetailedFoodEntryScreen> {
                           ),
                         ],
                       ),
-                      
                       if (_medicalConditions.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
-                          children: _medicalConditions.map((condition) => Chip(
-                            label: Text(condition),
-                            deleteIcon: const Icon(Icons.close, size: 18),
-                            onDeleted: () => _removeMedicalCondition(condition),
-                            backgroundColor: Colors.orange[100],
-                            deleteIconColor: Colors.orange[600],
-                          )).toList(),
+                          children: _medicalConditions
+                              .map((condition) => Chip(
+                                    label: Text(condition),
+                                    deleteIcon:
+                                        const Icon(Icons.close, size: 18),
+                                    onDeleted: () =>
+                                        _removeMedicalCondition(condition),
+                                    backgroundColor: Colors.orange[100],
+                                    deleteIconColor: Colors.orange[600],
+                                  ))
+                              .toList(),
                         ),
                       ],
                     ],
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Additional Notes
               Card(
                 child: Padding(
@@ -519,20 +541,21 @@ class _DetailedFoodEntryScreenState extends State<DetailedFoodEntryScreen> {
                       TextField(
                         controller: _notesController,
                         maxLines: 3,
-                                               decoration: InputDecoration(
-                         hintText: 'Any additional information about your meal...',
-                         border: const OutlineInputBorder(),
-                         filled: true,
-                         fillColor: Colors.grey[50],
-                       ),
+                        decoration: InputDecoration(
+                          hintText:
+                              'Any additional information about your meal...',
+                          border: const OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Save Button
               SizedBox(
                 width: double.infinity,
@@ -552,7 +575,8 @@ class _DetailedFoodEntryScreenState extends State<DetailedFoodEntryScreen> {
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
                       : const Text('Save Detailed Food Entry'),
@@ -571,9 +595,12 @@ class _DetailedFoodEntryScreenState extends State<DetailedFoodEntryScreen> {
       label: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: isSelected ? Colors.white : Colors.grey[600]),
+          Icon(icon,
+              size: 16, color: isSelected ? Colors.white : Colors.grey[600]),
           const SizedBox(width: 4),
-          Text(label, style: TextStyle(color: isSelected ? Colors.white : Colors.grey[700])),
+          Text(label,
+              style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.grey[700])),
         ],
       ),
       selected: isSelected,

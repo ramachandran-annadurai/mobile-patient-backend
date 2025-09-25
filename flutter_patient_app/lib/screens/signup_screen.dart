@@ -7,7 +7,7 @@ import '../widgets/loading_button.dart';
 
 class SignupScreen extends StatefulWidget {
   final String role;
-  
+
   const SignupScreen({super.key, required this.role});
 
   @override
@@ -25,9 +25,9 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _obscureConfirmPassword = true;
 
   String get _roleTitle => widget.role == 'doctor' ? 'Doctor' : 'Patient';
-  String get _roleSubtitle => widget.role == 'doctor' 
-    ? 'Create your doctor account' 
-    : 'Create your patient account';
+  String get _roleSubtitle => widget.role == 'doctor'
+      ? 'Create your doctor account'
+      : 'Create your patient account';
 
   @override
   void dispose() {
@@ -79,7 +79,8 @@ class _SignupScreenState extends State<SignupScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.primary),
-          onPressed: () => Navigator.pushReplacementNamed(context, '/role-selection'),
+          onPressed: () =>
+              Navigator.pushReplacementNamed(context, '/role-selection'),
         ),
       ),
       body: SafeArea(
@@ -91,22 +92,22 @@ class _SignupScreenState extends State<SignupScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 20),
-                
+
                 // Title
                 Text(
                   'Create $_roleTitle Account',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   _roleSubtitle,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                        color: AppColors.textSecondary,
+                      ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
@@ -139,7 +140,8 @@ class _SignupScreenState extends State<SignupScreen> {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter your email';
                     }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                        .hasMatch(value.trim())) {
                       return 'Please enter a valid email address';
                     }
                     return null;
@@ -174,7 +176,9 @@ class _SignupScreenState extends State<SignupScreen> {
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                      _obscurePassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                     ),
                     onPressed: () {
                       setState(() {
@@ -202,7 +206,9 @@ class _SignupScreenState extends State<SignupScreen> {
                   obscureText: _obscureConfirmPassword,
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                      _obscureConfirmPassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                     ),
                     onPressed: () {
                       setState(() {
@@ -238,7 +244,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
+                    const Text(
                       AppStrings.alreadyHaveAccount,
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
@@ -246,7 +252,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       onPressed: () {
                         Navigator.pushReplacementNamed(context, '/login');
                       },
-                      child: Text(
+                      child: const Text(
                         AppStrings.login,
                         style: TextStyle(
                           color: AppColors.primary,
@@ -263,4 +269,4 @@ class _SignupScreenState extends State<SignupScreen> {
       ),
     );
   }
-} 
+}

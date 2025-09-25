@@ -19,8 +19,9 @@ class _PatientDailyLogScreenState extends State<PatientDailyLogScreen> {
   @override
   void initState() {
     super.initState();
-    _dateController.text = "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}";
-    
+    _dateController.text =
+        "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}";
+
     // Ensure user data is loaded when the screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -54,17 +55,21 @@ class _PatientDailyLogScreenState extends State<PatientDailyLogScreen> {
     switch (category) {
       case 'food':
         Navigator.pushNamed(context, '/patient-food-tracking', arguments: {
-          'date': "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}",
+          'date':
+              "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}",
         });
         break;
       case 'medication':
-        Navigator.pushNamed(context, '/patient-medication-tracking', arguments: {
-          'date': "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}",
-        });
+        Navigator.pushNamed(context, '/patient-medication-tracking',
+            arguments: {
+              'date':
+                  "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}",
+            });
         break;
       case 'symptoms':
         Navigator.pushNamed(context, '/patient-symptoms-tracking', arguments: {
-          'date': "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}",
+          'date':
+              "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}",
         });
         break;
       case 'sleep':
@@ -76,7 +81,7 @@ class _PatientDailyLogScreenState extends State<PatientDailyLogScreen> {
           print('  Username: ${userInfo['username']}');
           print('  UserId: ${userInfo['userId']}');
           print('  UserRole: ${userInfo['userRole']}');
-          
+
           Navigator.pushNamed(context, '/patient-sleep-log', arguments: {
             'userId': userInfo['userId'] ?? 'unknown',
             'userRole': userInfo['userRole'] ?? 'patient',
@@ -87,7 +92,8 @@ class _PatientDailyLogScreenState extends State<PatientDailyLogScreen> {
         break;
       case 'mental_health':
         Navigator.pushNamed(context, '/mental-health', arguments: {
-          'selectedDate': "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}",
+          'selectedDate':
+              "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}",
         });
         break;
       case 'kick_count':
@@ -107,6 +113,34 @@ class _PatientDailyLogScreenState extends State<PatientDailyLogScreen> {
             'userRole': userInfo['userRole'] ?? 'patient',
             'username': userInfo['username'] ?? 'unknown',
             'email': userInfo['email'] ?? 'unknown',
+          }).then((result) {
+            print('🔍 Navigation result: $result');
+          }).catchError((error) {
+            print('❌ Navigation error: $error');
+          });
+        }).catchError((error) {
+          print('❌ Error getting user info: $error');
+        });
+        break;
+      case 'vital_signs':
+        print('🔍 Vital Signs button clicked!');
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        // Use the async method to get user info
+        authProvider.getCurrentUserInfo().then((userInfo) {
+          print('🔍 Daily Log Debug - User Info:');
+          print('  Email: ${userInfo['email']}');
+          print('  Username: ${userInfo['username']}');
+          print('  UserId: ${userInfo['userId']}');
+          print('  UserRole: ${userInfo['userRole']}');
+
+          print('🔍 Navigating to Vital Signs...');
+          Navigator.pushNamed(context, '/patient-vital-signs', arguments: {
+            'userId': userInfo['userId'] ?? 'unknown',
+            'userRole': userInfo['userRole'] ?? 'patient',
+            'username': userInfo['username'] ?? 'unknown',
+            'email': userInfo['email'] ?? 'unknown',
+            'selectedDate':
+                "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}",
           }).then((result) {
             print('🔍 Navigation result: $result');
           }).catchError((error) {
@@ -163,7 +197,7 @@ class _PatientDailyLogScreenState extends State<PatientDailyLogScreen> {
                     children: [
                       Row(
                         children: [
-                          CircleAvatar(
+                          const CircleAvatar(
                             radius: 25,
                             backgroundColor: AppColors.primary,
                             child: Icon(
@@ -179,17 +213,23 @@ class _PatientDailyLogScreenState extends State<PatientDailyLogScreen> {
                               children: [
                                 Text(
                                   'Daily Health Log',
-                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textPrimary,
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.textPrimary,
+                                      ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Track your daily health metrics and activities',
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.textSecondary,
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: AppColors.textSecondary,
+                                      ),
                                 ),
                               ],
                             ),
@@ -212,12 +252,11 @@ class _PatientDailyLogScreenState extends State<PatientDailyLogScreen> {
                       Text(
                         'Select Date',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
                       ),
                       const SizedBox(height: 16),
-                      
                       TextFormField(
                         controller: _dateController,
                         readOnly: true,
@@ -242,9 +281,9 @@ class _PatientDailyLogScreenState extends State<PatientDailyLogScreen> {
               Text(
                 'Track Your Health Today',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
               ),
               const SizedBox(height: 16),
 
@@ -302,6 +341,14 @@ class _PatientDailyLogScreenState extends State<PatientDailyLogScreen> {
                       color: Colors.pink,
                       onTap: () => _navigateToCategory('kick_count'),
                     ),
+                    _buildCategoryCard(
+                      context,
+                      title: 'Vital Signs',
+                      subtitle: 'Track heart rate, blood pressure, temperature',
+                      icon: Icons.favorite_border,
+                      color: Colors.green,
+                      onTap: () => _navigateToCategory('vital_signs'),
+                    ),
                   ],
                 ),
               ),
@@ -326,7 +373,7 @@ class _PatientDailyLogScreenState extends State<PatientDailyLogScreen> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         child: Container(
-          height: 160, // Fixed height to prevent overflow
+          height: 180, // Increased height to prevent overflow
           padding: const EdgeInsets.all(AppSizes.paddingMedium),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -347,9 +394,9 @@ class _PatientDailyLogScreenState extends State<PatientDailyLogScreen> {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
                 textAlign: TextAlign.center,
                 maxLines: 1, // Single line for title
                 overflow: TextOverflow.ellipsis,
@@ -358,9 +405,9 @@ class _PatientDailyLogScreenState extends State<PatientDailyLogScreen> {
               Text(
                 subtitle,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
-                  fontSize: 11, // Smaller font size
-                ),
+                      color: AppColors.textSecondary,
+                      fontSize: 11, // Smaller font size
+                    ),
                 textAlign: TextAlign.center,
                 maxLines: 2, // Reduced to 2 lines
                 overflow: TextOverflow.ellipsis,
@@ -371,4 +418,4 @@ class _PatientDailyLogScreenState extends State<PatientDailyLogScreen> {
       ),
     );
   }
-} 
+}

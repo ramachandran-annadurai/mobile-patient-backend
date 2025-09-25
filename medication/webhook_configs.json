@@ -20,7 +20,7 @@
     "id": "5564be46-df08-409b-9df0-bbf62bd1577d",
     "name": "n8n Webhook",
     "url": "https://n8n.srv795087.hstgr.cloud/webhook/bf25c478-c4a9-44c5-8f43-08c3fcae51f9",
-    "enabled": true,
+    "enabled": false,
     "method": "POST",
     "headers": {},
     "timeout": 30,

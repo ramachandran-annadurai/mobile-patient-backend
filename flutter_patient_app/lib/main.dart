@@ -23,6 +23,7 @@ import 'providers/auth_provider.dart';
 import 'providers/user_provider.dart';
 import 'utils/constants.dart';
 import 'screens/patient_kick_counter_screen.dart';
+import 'screens/patient_vital_signs_screen.dart';
 
 void main() {
   runApp(const PatientAlertApp());
@@ -74,7 +75,8 @@ class PatientAlertApp extends StatelessWidget {
             ),
             filled: true,
             fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
         ),
         initialRoute: '/role-selection',
@@ -92,39 +94,54 @@ class PatientAlertApp extends StatelessWidget {
           '/patient-profile': (context) => const PatientProfileScreen(),
           '/patient-daily-log': (context) => const PatientDailyLogScreen(),
           '/patient-food-tracking': (context) {
-            final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+            final args = ModalRoute.of(context)!.settings.arguments
+                as Map<String, dynamic>;
             return PatientFoodTrackingScreen(
               date: args['date'],
             );
           },
           '/patient-sleep-log': (context) => PatientSleepLogScreen(
-            userId: (ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>)['userId'],
-            userRole: (ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>)['userRole'],
-            username: (ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>)['username'],
-            email: (ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>)['email'],
-          ),
+                userId: (ModalRoute.of(context)?.settings.arguments
+                    as Map<String, dynamic>)['userId'],
+                userRole: (ModalRoute.of(context)?.settings.arguments
+                    as Map<String, dynamic>)['userRole'],
+                username: (ModalRoute.of(context)?.settings.arguments
+                    as Map<String, dynamic>)['username'],
+                email: (ModalRoute.of(context)?.settings.arguments
+                    as Map<String, dynamic>)['email'],
+              ),
           '/patient-kick-counter': (context) => PatientKickCounterScreen(
-            userId: (ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>)['userId'],
-            userRole: (ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>)['userRole'],
-            username: (ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>)['username'],
-            email: (ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>)['email'],
-          ),
+                userId: (ModalRoute.of(context)?.settings.arguments
+                    as Map<String, dynamic>)['userId'],
+                userRole: (ModalRoute.of(context)?.settings.arguments
+                    as Map<String, dynamic>)['userRole'],
+                username: (ModalRoute.of(context)?.settings.arguments
+                    as Map<String, dynamic>)['username'],
+                email: (ModalRoute.of(context)?.settings.arguments
+                    as Map<String, dynamic>)['email'],
+              ),
+          '/patient-vital-signs': (context) => PatientVitalSignsScreen(),
           '/patient-symptoms-tracking': (context) {
-            final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>;
+            final args = ModalRoute.of(context)?.settings.arguments
+                as Map<String, dynamic>;
             return PatientSymptomsTrackingScreen(
               date: args['date'],
             );
           },
           '/patient-medication-tracking': (context) {
-            final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>;
+            final args = ModalRoute.of(context)?.settings.arguments
+                as Map<String, dynamic>;
             return PatientMedicationTrackingScreen(
               date: args['date'],
             );
           },
-          '/medication-dosage-list': (context) => const MedicationDosageListScreen(),
-          '/patient-daily-tracking-details': (context) => const PatientDailyTrackingDetailsScreen(),
+          '/medication-dosage-list': (context) =>
+              const MedicationDosageListScreen(),
+          '/patient-daily-tracking-details': (context) =>
+              const PatientDailyTrackingDetailsScreen(),
           '/mental-health': (context) {
-            final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+            final args = ModalRoute.of(context)?.settings.arguments
+                as Map<String, dynamic>?;
             return MentalHealthScreen(
               selectedDate: args?['selectedDate'],
             );
@@ -132,14 +149,16 @@ class PatientAlertApp extends StatelessWidget {
           '/profile': (context) => const ProfileScreen(),
           '/forgot-password': (context) => const ForgotPasswordScreen(),
           '/otp-verification': (context) {
-            final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+            final args = ModalRoute.of(context)!.settings.arguments
+                as Map<String, dynamic>;
             return OtpVerificationScreen(
               email: args['email'],
               role: args['role'] ?? 'patient',
             );
           },
           '/reset-password': (context) {
-            final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+            final args = ModalRoute.of(context)!.settings.arguments
+                as Map<String, dynamic>;
             return ResetPasswordScreen(email: args['email']);
           },
           '/profile-completion': (context) => const ProfileCompletionScreen(),
@@ -148,4 +167,4 @@ class PatientAlertApp extends StatelessWidget {
       ),
     );
   }
-} 
+}
